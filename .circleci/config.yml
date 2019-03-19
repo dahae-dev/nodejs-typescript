@@ -1,16 +1,33 @@
-# https://stackoverflow.com/a/51868459/2453632
-deploy:
-docker:
-  - image: circleci/node:10.15.3
-steps:
-  - restore_cache:
-      keys:
-        - v1-dependencies-{{ checksum "package.json" }}
-  - run:
-      name: AWS EC2 deploy
-      command: |
-        #upload all the code to machine
-        scp -r -o StrictHostKeyChecking=no ./ ubuntu@13.125.87.26:/home/ubuntu/studystates-server
+# Javascript Node CircleCI 2.0 configuration file
+#
+# Check https://circleci.com/docs/2.0/language-javascript/ for more details
+#
+version: 2
+jobs:
+  build:
+    docker:
+      # specify the version you desire here
+      - image: circleci/node:10.15.3
 
-        #Run script inside of machine
-        ssh -o StrictHostKeyChecking=no ubuntu@13.125.87.26 "/home/ubuntu/studystates-server/deploy.sh"
+      # Specify service dependencies here if necessary
+      # CircleCI maintains a library of pre-built images
+      # documented at https://circleci.com/docs/2.0/circleci-images/
+      # - image: circleci/mongo:3.4.4
+
+    working_directory: /home/ubuntu/studystates-server
+
+    steps:
+      # Download and cache dependencies
+      - restore_cache:
+          keys:
+            - v1-dependencies-{{ checksum "package.json" }}
+            # fallback to using the latest cache if no exact match is found
+            - v1-dependencies-
+      - run:
+          name: AWS EC2 deploy
+          command: |
+            #upload all the code to machine
+            scp -r -o StrictHostKeyChecking=no ./ ubuntu@13.125.87.26:/home/ubuntu/studystates-server
+
+            #Run script inside of machine
+            ssh -o StrictHostKeyChecking=no ubuntu@13.125.87.26 "/home/ubuntu/studystates-server/deploy.sh"
