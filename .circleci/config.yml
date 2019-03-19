@@ -1,0 +1,16 @@
+# https://stackoverflow.com/a/51868459/2453632
+deploy:
+docker:
+  - image: circleci/node:10.15.3
+steps:
+  - restore_cache:
+      keys:
+        - v1-dependencies-{{ checksum "package.json" }}
+  - run:
+      name: AWS EC2 deploy
+      command: |
+        #upload all the code to machine
+        scp -r -o StrictHostKeyChecking=no ./ ubuntu@13.125.87.26:/home/ubuntu/studystates-server
+
+        #Run script inside of machine
+        ssh -o StrictHostKeyChecking=no ubuntu@13.125.87.26 "/home/ubuntu/studystates-server/deploy.sh"
