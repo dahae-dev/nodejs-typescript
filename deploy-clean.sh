@@ -6,9 +6,9 @@ echo "[+] Start deploy-clean."
 pm2 stop 0
 
 # Remove repository
-\rm -rf /home/ubuntu/studystates-server
+\rm -rf /home/ubuntu/studystates-server/dev
 
 # Make directory
-mkdir /home/ubuntu/studystates-server
+mkdir -p /home/ubuntu/studystates-server/dev
 
 echo "[+] End deploy-clean."

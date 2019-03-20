@@ -21,11 +21,11 @@ jobs: # a collection of steps
       - run:
           name: AWS EC2 deploy
           command: |
-            #Run script inside of machine
+            # Script for cleaning the previous deploy /home/ubuntu/studystates-server/dev
             ssh -o StrictHostKeyChecking=no ubuntu@13.125.87.26 "/home/ubuntu/studystates-server/deploy-clean.sh"
 
-            #upload all the code to machine
-            scp -r -o StrictHostKeyChecking=no ./ ubuntu@13.125.87.26:/home/ubuntu/studystates-server
+            # upload all the code to machine
+            scp -r -o StrictHostKeyChecking=no ./ ubuntu@13.125.87.26:/home/ubuntu/studystates-server/dev
 
-            #Run script inside of machine
-            ssh -o StrictHostKeyChecking=no ubuntu@13.125.87.26 "/home/ubuntu/studystates-server/deploy-run.sh"
+            # Script for building in this release.
+            ssh -o StrictHostKeyChecking=no ubuntu@13.125.87.26 "/home/ubuntu/studystates-server/dev/deploy-build.sh"

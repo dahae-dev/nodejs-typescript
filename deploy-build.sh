@@ -3,7 +3,7 @@
 # EC2 was already setup. CI/CD gets update and rebuild it.
 echo "[+] Start deploy-build."
 
-cd ~/studystates-server
+cd /home/ubuntu/studystates-server/dev
 
 # Install package
 npm install
@@ -12,7 +12,6 @@ npm install
 npm run build
 
 # Start server
-
 pm2 start npm -- start
 
 echo "[+] End deploy-build."
