@@ -5,6 +5,9 @@ echo "[+] Start deploy-build."
 
 cd /home/ubuntu/studystates-server/dev
 
+# Decompress source code
+tar -zxvf dev.tar.gz
+
 # Install package
 npm install
 
