@@ -46,4 +46,3 @@ debug: Using .env.example file to supply config environment variables
   App is running at http://localhost:3000 in development mode
   Press CTRL-C to stop
 ```
-
