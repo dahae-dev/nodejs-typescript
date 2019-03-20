@@ -1,12 +1,18 @@
 #!/bin/bash
 
-echo "[*] Start deploy"
 # EC2 was already setup. CI/CD gets update and rebuild it.
+echo "[+] Start deploy-build."
+
 cd ~/studystates-server
+
+# Install package
 npm install
+
+# Server build including typescript
 npm run build
-yarn run build-ts
-pm2 stop build/server
-pm2 start build/server
+
+# Start server
+
 pm2 start npm -- start
-echo "[+] Deploy end"
+
+echo "[+] End deploy-build."
