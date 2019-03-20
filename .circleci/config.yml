@@ -32,4 +32,4 @@ jobs: # a collection of steps
             scp -r -o StrictHostKeyChecking=no /tmp/dev.tar.gz ubuntu@13.125.87.26:/home/ubuntu/studystates-server/dev
 
       # Script for building in this release.
-      - run: ssh -o StrictHostKeyChecking=no ubuntu@13.125.87.26 "/home/ubuntu/studystates-server/dev/deploy-build.sh"
+      - run: ssh -o StrictHostKeyChecking=no ubuntu@13.125.87.26 "/home/ubuntu/studystates-server/deploy-build.sh"
