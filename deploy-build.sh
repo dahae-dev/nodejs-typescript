@@ -15,6 +15,5 @@ npm install
 npm run build
 
 # Start server
-pm2 start npm -- start
-
+pm2 start npm --name "studystates-server" -- start
 echo "[+] End deploy-build."
