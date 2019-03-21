@@ -1,6 +1,9 @@
 # studystates-server : Express using typescript
 
-[Microsoft/TypeScript-Node-Starter: A starter template for TypeScript and Node with a detailed README describing how to use the two together.](https://github.com/Microsoft/TypeScript-Node-Starter)
+## Status
+
+- dev branch : CircleCI [![CircleCI](https://circleci.com/gh/codestates/studystates-server/tree/dev.svg?style=svg&circle-token=e988f2482f1313e0473c65b8d610463eb55f5ea9)](https://circleci.com/gh/codestates/studystates-server/tree/dev)
+- master branch : manual
 
 ## TL;DR
 
@@ -47,3 +50,6 @@ debug: Using .env.example file to supply config environment variables
   Press CTRL-C to stop
 ```
 
+## Code base
+
+[Microsoft/TypeScript-Node-Starter: A starter template for TypeScript and Node with a detailed README describing how to use the two together.](https://github.com/Microsoft/TypeScript-Node-Starter)
