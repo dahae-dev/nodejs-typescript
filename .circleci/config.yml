@@ -19,17 +19,17 @@ jobs: # a collection of steps
             # fallback to using the latest cache if no exact match is found
             - v1-dependencies-
       # Script for cleaning the previous deploy /home/ubuntu/studystates-server/dev
-      - run: ssh -o StrictHostKeyChecking=no ubuntu@13.125.87.26 "/home/ubuntu/studystates-server/deploy-clean.sh"
+      - run: ssh -o StrictHostKeyChecking=no ubuntu@52.78.123.6 "/home/ubuntu/studystates-server/deploy-clean.sh"
 
       # upload all the code to machine
       - run:
           name: AWS EC2 deploy
           command: |
             # Create archive.
-            tar -czf /tmp/dev.tar.gz .
+            tar -czf /tmp/studystates-server.tar.gz .
 
             # Script for cleaning the previous deploy /home/ubuntu/studystates-server/dev
-            scp -r -o StrictHostKeyChecking=no /tmp/dev.tar.gz ubuntu@13.125.87.26:/home/ubuntu/studystates-server/dev
+            scp -r -o StrictHostKeyChecking=no /tmp/studystates-server.tar.gz ubuntu@52.78.123.6:/home/ubuntu/studystates-server/dev
 
       # Script for building in this release.
-      - run: ssh -o StrictHostKeyChecking=no ubuntu@13.125.87.26 "/home/ubuntu/studystates-server/deploy-build.sh"
+      - run: ssh -o StrictHostKeyChecking=no ubuntu@52.78.123.6 "/home/ubuntu/studystates-server/deploy-build.sh"
