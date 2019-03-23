@@ -14,6 +14,10 @@ tar -zxvf studystates-server.tar.gz
 echo "[+] Install node package files"
 npm install
 
+echo "[+] Install node-sass"
+npm install -g node-sass
+npm rebuild node-sass
+
 # Server build including typescript
 echo "[+] Run build"
 npm run build
