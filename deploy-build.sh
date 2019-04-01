@@ -3,6 +3,10 @@
 # EC2 was already setup. CI/CD gets update and rebuild it.
 echo "[+] Start deploy-build."
 
+# Source config for setting PATH
+echo "[+] Source .bashrc for configuring PATH"
+source /home/ubuntu/.bashrc
+
 echo "[+] Move to studystates-server folder/dev"
 cd /home/ubuntu/studystates-server/dev
 
