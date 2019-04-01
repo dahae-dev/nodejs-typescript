@@ -2,13 +2,14 @@ import async from "async";
 import crypto from "crypto";
 import nodemailer from "nodemailer";
 import passport from "passport";
-import jwt from "jsonwebtoken";
+import * as jToken from "jsonwebtoken";
 import { Request, Response, NextFunction } from "express";
 import { IVerifyOptions } from "passport-local";
 import { WriteError } from "mongodb";
-import _ from "lodash";
+import _ from "underscore";
 
 import { default as User, UserModel, AuthToken } from "../models/User";
+import * as token from "../util/token";
 import "../config/passport";
 const request = require("express-validator");
 
@@ -69,18 +70,12 @@ export let postSignup = (req: Request, res: Response, next: NextFunction) => {
         // res.redirect("/");
 
         console.log("TCL: postSignup -> user", user);
-        const token = jwt.sign(
-          {
-            _id: user._id,
-            email: user.email
-          },
-          process.env.JWT_SECRET
-        );
 
+        const myToken = token.generateToken(user);
         res
-          .header("x-auth-token", token)
+          .header("x-auth-token", myToken)
           .header("access-control-expose-headers", "x-auth-token")
-          .send(_.pick(user, ["_id", "email"]));
+          .send(_.pick(user, "_id", "email"));
       });
     });
   });
@@ -139,19 +134,11 @@ export let postLogin = (req: Request, res: Response, next: NextFunction) => {
       }
       req.flash("success", { msg: "Success! You are logged in." });
 
-      const token = jwt.sign(
-        {
-          _id: user._id,
-          email: user.email
-        },
-        process.env.JWT_SECRET
-      );
-
+      const myToken = token.generateToken(user);
       res
-        .header("x-auth-token", token)
+        .header("x-auth-token", myToken)
         .header("access-control-expose-headers", "x-auth-token")
-        .send(_.pick(user, ["_id", "email"]));
-
+        .send(_.pick(user, "_id", "email"));
       // res.redirect(req.session.returnTo || "/");
     });
   })(req, res, next);

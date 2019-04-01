@@ -2,7 +2,7 @@ import passport from "passport";
 import request from "request";
 import passportLocal from "passport-local";
 import passportFacebook from "passport-facebook";
-import _ from "lodash";
+import _ from "underscore";
 
 // import { User, UserType } from '../models/User';
 import { default as User } from "../models/User";
