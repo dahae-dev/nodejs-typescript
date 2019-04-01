@@ -3,6 +3,7 @@ import compression from "compression"; // compresses requests
 import session from "express-session";
 import bodyParser from "body-parser";
 import logger from "./util/logger";
+import morgan from "morgan";
 import lusca from "lusca";
 import dotenv from "dotenv";
 import mongo from "connect-mongo";
@@ -81,6 +82,8 @@ app.use(
 app.use(passport.initialize());
 app.use(passport.session());
 app.use(flash());
+// TODO: Change to refer NODE_ENV
+app.use(morgan("dev"));
 
 app.use(lusca.xframe("SAMEORIGIN"));
 app.use(lusca.xssProtection(true));
@@ -104,24 +107,24 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use(express.static(path.join(__dirname, "public"), { maxAge: 31557600000 }));
+// app.use(express.static(path.join(__dirname, "public"), { maxAge: 31557600000 }));
 
 /**
  * Primary app routes.
  */
 app.get("/", homeController.index);
 
+app.get("/signup", userController.getSignup);
+app.post("/signup", userController.postSignup);
+
 app.get("/login", userController.getLogin);
 app.post("/login", userController.postLogin);
-app.get("/logout", userController.logout);
+// app.get("/logout", userController.logout);
 app.get("/forgot", userController.getForgot);
 app.post("/forgot", userController.postForgot);
 
 app.get("/reset/:token", userController.getReset);
 app.post("/reset/:token", userController.postReset);
-
-app.get("/signup", userController.getSignup);
-app.post("/signup", userController.postSignup);
 
 app.get("/contact", contactController.getContact);
 app.post("/contact", contactController.postContact);
@@ -135,8 +138,8 @@ app.get("/account/unlink/:provider", passportConfig.isAuthenticated, userControl
 /**
  * API examples routes.
  */
-app.get("/api", apiController.getApi);
-app.get("/api/facebook", passportConfig.isAuthenticated, passportConfig.isAuthorized, apiController.getFacebook);
+// app.get("/api", apiController.getApi);
+// app.get("/api/facebook", passportConfig.isAuthenticated, passportConfig.isAuthorized, apiController.getFacebook);
 
 /**
  * OAuth authentication routes. (Sign in)
