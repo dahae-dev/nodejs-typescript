@@ -19,7 +19,7 @@ echo "[+] Install node package files"
 npm install
 
 echo "[+] Install node-sass"
-npm install -g node-sass
+sudo npm install -g node-sass
 npm rebuild node-sass
 
 # Server build including typescript
