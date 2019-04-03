@@ -45,10 +45,13 @@ export let postSignup = (req: Request, res: Response, next: NextFunction) => {
     return res.status(400).send("Password가 일치하지 않습니다.");
   }
 
-  const { email, password } = req.body;
+  // console.log("TCL: postSignup -> user", req.body);
+
+  const { name, email, password } = req.body;
   const user = new User({
-    email: req.body.email,
-    password: req.body.password
+    name,
+    email,
+    password
   });
 
   User.findOne({ email: req.body.email }, (err, existingUser) => {
@@ -76,7 +79,7 @@ export let postSignup = (req: Request, res: Response, next: NextFunction) => {
         res
           .header("x-auth-token", myToken)
           .header("access-control-expose-headers", "x-auth-token")
-          .send(_.pick(user, "_id", "email"));
+          .send(_.pick(user, "_id", "name", "email"));
       });
     });
   });
@@ -139,7 +142,7 @@ export let postLogin = (req: Request, res: Response, next: NextFunction) => {
       res
         .header("x-auth-token", myToken)
         .header("access-control-expose-headers", "x-auth-token")
-        .send(_.pick(user, "_id", "email"));
+        .send(_.pick(user, "_id", "name", "email"));
       // res.redirect(req.session.returnTo || "/");
     });
   })(req, res, next);
