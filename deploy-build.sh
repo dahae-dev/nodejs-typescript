@@ -28,5 +28,5 @@ yarn run build
 
 # Start server
 echo "[+] Start server"
-pm2 start npm --name "studystates-server" -- start
+pm2 start npm --name "studystates-server" -- run development
 echo "[+] End deploy-build."
