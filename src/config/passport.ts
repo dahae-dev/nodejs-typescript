@@ -4,6 +4,9 @@ import passportLocal from "passport-local";
 import passportFacebook from "passport-facebook";
 import _ from "underscore";
 
+import { CLIENT_BASE_URL, FACEBOOK_ID, FACEBOOK_SECRET, FACEBOOK_CALLBACK_URL } from "../util/secrets";
+import { sendResponseWithTokenInHeader } from "../util/token";
+
 // import { User, UserType } from '../models/User';
 import { default as User } from "../models/User";
 import { Request, Response, NextFunction } from "express";
@@ -26,10 +29,10 @@ passport.deserializeUser((id, done) => {
  */
 passport.use(
   new LocalStrategy({ usernameField: "email", passwordField: "password" }, (email, password, done) => {
-    console.log("TCL: LocalStrategy");
+    // console.log("TCL: LocalStrategy");
 
     const user = User.findOne({ email: email.toLocaleLowerCase() });
-    console.log("TCL: LocalStrategy --> user", user);
+    // console.log("TCL: LocalStrategy --> user", user);
 
     User.findOne({ email: email.toLowerCase() }, (err, user: any) => {
       if (err) return done(err);
@@ -72,13 +75,14 @@ passport.use(
 passport.use(
   new FacebookStrategy(
     {
-      clientID: process.env.FACEBOOK_ID,
-      clientSecret: process.env.FACEBOOK_SECRET,
-      callbackURL: "https://api-dev.studystates.net/auth/facebook/callback",
+      clientID: FACEBOOK_ID,
+      clientSecret: FACEBOOK_SECRET,
+      callbackURL: FACEBOOK_CALLBACK_URL,
       profileFields: ["name", "email", "link", "locale", "timezone"],
       passReqToCallback: true
     },
     (req: any, accessToken, refreshToken, profile, done) => {
+      // Session exists.
       if (req.user) {
         User.findOne({ facebook: profile.id }, (err, existingUser) => {
           if (err) {
@@ -89,7 +93,10 @@ passport.use(
               msg:
                 "There is already a Facebook account that belongs to you. Sign in with that account or delete it, then link it with your current account."
             });
-            done(err);
+            // console.log("TCL: existingUser", existingUser);
+            // done(err);
+            // * : Changed to give JWT token for existingUser login.
+            done(err, existingUser);
           } else {
             User.findById(req.user.id, (err, user: any) => {
               if (err) {
@@ -108,12 +115,14 @@ passport.use(
             });
           }
         });
+        // No session user
       } else {
         User.findOne({ facebook: profile.id }, (err, existingUser) => {
           if (err) {
             return done(err);
           }
           if (existingUser) {
+            // console.log("TCL: [*] existingUser", existingUser);
             return done(undefined, existingUser);
           }
           User.findOne({ email: profile._json.email }, (err, existingEmailUser) => {
@@ -136,6 +145,7 @@ passport.use(
               user.profile.picture = `https://graph.facebook.com/${profile.id}/picture?type=large`;
               user.profile.location = profile._json.location ? profile._json.location.name : "";
               user.save((err: Error) => {
+                // console.log("TCL: [+] Facebook first registration done.");
                 done(err, user);
               });
             }
@@ -153,7 +163,7 @@ export let isAuthenticated = (req: Request, res: Response, next: NextFunction) =
   if (req.isAuthenticated()) {
     return next();
   }
-  res.redirect("/login");
+  res.redirect(`${CLIENT_BASE_URL}/login`);
 };
 
 /**

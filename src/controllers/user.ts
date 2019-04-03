@@ -8,6 +8,7 @@ import { IVerifyOptions } from "passport-local";
 import { WriteError } from "mongodb";
 import _ from "underscore";
 
+import { CLIENT_BASE_URL } from "../util/secrets";
 import { default as User, UserModel, AuthToken } from "../models/User";
 import * as token from "../util/token";
 import "../config/passport";
@@ -38,7 +39,7 @@ export let postSignup = (req: Request, res: Response, next: NextFunction) => {
 
   const errors = req.validationErrors();
   if (errors) {
-    console.log("TCL: postSignup -> errors", errors);
+    // console.log("TCL: postSignup -> errors", errors);
     req.flash("errors", errors);
     // return res.redirect("/signup");
     return res.status(400).send("Password가 일치하지 않습니다.");
@@ -57,7 +58,7 @@ export let postSignup = (req: Request, res: Response, next: NextFunction) => {
     // Found existing user
     if (existingUser) {
       req.flash("errors", { msg: "Account with that email address already exists." });
-      return res.redirect("/login");
+      return res.redirect(`${CLIENT_BASE_URL}/login`);
     }
     // New User
     user.save(err => {
@@ -69,7 +70,7 @@ export let postSignup = (req: Request, res: Response, next: NextFunction) => {
         }
         // res.redirect("/");
 
-        console.log("TCL: postSignup -> user", user);
+        // console.log("TCL: postSignup -> user", user);
 
         const myToken = token.generateToken(user);
         res
@@ -86,12 +87,12 @@ export let postSignup = (req: Request, res: Response, next: NextFunction) => {
  * Login page.
  */
 export let getLogin = (req: Request, res: Response) => {
-  if (req.user) {
-    return res.redirect("/");
-  }
-  res.render("account/login", {
-    title: "Login"
-  });
+  if (req.user) return res.redirect(`${CLIENT_BASE_URL}`);
+  else return res.redirect(`${CLIENT_BASE_URL}/login`);
+
+  // res.render("account/login", {
+  //   title: "Login"
+  // });
 };
 
 /**
@@ -99,7 +100,7 @@ export let getLogin = (req: Request, res: Response) => {
  * Sign in using email and password.
  */
 export let postLogin = (req: Request, res: Response, next: NextFunction) => {
-  console.log("TCL: postLogin entered.");
+  // console.log("TCL: postLogin entered.");
 
   req.assert("email", "Email is not valid").isEmail();
   req.assert("password", "Password cannot be blank").notEmpty();
@@ -108,7 +109,7 @@ export let postLogin = (req: Request, res: Response, next: NextFunction) => {
   const errors = req.validationErrors();
 
   if (errors) {
-    console.log("TCL: postLogin -> errors", errors);
+    // console.log("TCL: postLogin -> errors", errors);
     req.flash("errors", errors);
     // return res.redirect("/login");
     return res.status(400).send("Login failed.");
@@ -127,7 +128,7 @@ export let postLogin = (req: Request, res: Response, next: NextFunction) => {
     }
     // User login
     req.logIn(user, err => {
-      console.log("TCL: postLogin -> user", user);
+      // console.log("TCL: postLogin -> user", user);
 
       if (err) {
         return next(err);
@@ -150,7 +151,7 @@ export let postLogin = (req: Request, res: Response, next: NextFunction) => {
  */
 export let logout = (req: Request, res: Response) => {
   req.logout();
-  res.redirect("/");
+  res.redirect(`${CLIENT_BASE_URL}`);
 };
 
 /**
@@ -242,7 +243,7 @@ export let postDeleteAccount = (req: Request, res: Response, next: NextFunction)
     }
     req.logout();
     req.flash("info", { msg: "Your account has been deleted." });
-    res.redirect("/");
+    res.redirect(`${CLIENT_BASE_URL}`);
   });
 };
 

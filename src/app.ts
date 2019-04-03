@@ -14,12 +14,14 @@ import passport from "passport";
 import expressValidator from "express-validator";
 import bluebird from "bluebird";
 import cors from "cors";
-import { MONGODB_URI, SESSION_SECRET } from "./util/secrets";
+
+import { CLIENT_BASE_URL, MONGODB_URI, SESSION_SECRET } from "./util/secrets";
+import * as token from "./util/token";
 
 const MongoStore = mongo(session);
 
 // Load environment variables from .env file, where API keys and passwords are configured
-dotenv.config({ path: ".env.example" });
+// dotenv.config({ path: ".env.example" });
 
 // Controllers (route handlers)
 import * as homeController from "./controllers/home";
@@ -50,8 +52,8 @@ mongoose
 app.set("port", process.env.PORT || 5000);
 
 // TODO: exclude pug view
-app.set("views", path.join(__dirname, "../views"));
-app.set("view engine", "pug");
+// app.set("views", path.join(__dirname, "../views"));
+// app.set("view engine", "pug");
 // ------
 
 // For Social login
@@ -116,16 +118,14 @@ app.get("/", homeController.index);
 
 app.get("/signup", userController.getSignup);
 app.post("/signup", userController.postSignup);
-
 app.get("/login", userController.getLogin);
 app.post("/login", userController.postLogin);
-// app.get("/logout", userController.logout);
+app.get("/logout", userController.logout);
+
 app.get("/forgot", userController.getForgot);
 app.post("/forgot", userController.postForgot);
-
 app.get("/reset/:token", userController.getReset);
 app.post("/reset/:token", userController.postReset);
-
 app.get("/contact", contactController.getContact);
 app.post("/contact", contactController.postContact);
 
@@ -146,11 +146,10 @@ app.get("/account/unlink/:provider", passportConfig.isAuthenticated, userControl
  */
 app.get("/auth/facebook", passport.authenticate("facebook", { scope: ["email", "public_profile"] }));
 app.get("/auth/facebook/callback", passport.authenticate("facebook", { failureRedirect: "/login" }), (req, res) => {
-  res.redirect(req.session.returnTo || "/auth/token");
-});
+  // console.log("TCL: [*] /auth/facebook/callback : req.user = ", req.user);
 
-app.get("/auth/token", (req, res) => {
-  res.redirect("/");
+  const myToken = token.generateToken(req.user);
+  res.redirect(`${CLIENT_BASE_URL}/temp?start="auth"&token=${myToken}&userId=${req.user.id}&end="end"`);
 });
 
 export default app;
