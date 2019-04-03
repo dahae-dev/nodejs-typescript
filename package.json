@@ -9,7 +9,9 @@
   "author": "Bowden Kelly",
   "license": "MIT",
   "scripts": {
-    "start": "npm run serve",
+    "start": "NODE_ENV=local npm run serve",
+    "local": "NODE_ENV=local npm run serve",
+    "development": "NODE_ENV=development  npm run serve",
     "build": "npm run build-sass && npm run build-ts && npm run tslint && npm run copy-static-assets",
     "serve": "node dist/server.js",
     "watch-node": "nodemon dist/server.js",
