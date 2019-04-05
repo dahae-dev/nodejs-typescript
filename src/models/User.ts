@@ -3,10 +3,11 @@ import crypto from "crypto";
 import mongoose from "mongoose";
 
 export type UserModel = mongoose.Document & {
+  _id?: string;
   email: string;
   password: string;
   name: string;
-  mobile: string;
+  phone: string;
   passwordResetToken: string;
   passwordResetExpires: Date;
 
@@ -40,7 +41,7 @@ const userSchema = new mongoose.Schema(
     email: { type: String, unique: true },
     password: String,
     name: String,
-    mobile: String,
+    phone: String,
     passwordResetToken: String,
     passwordResetExpires: Date,
 

@@ -10,10 +10,11 @@ export interface IUser {
   name: string;
 }
 export const generateToken = (user: any): string => {
+  // console.log("TCL: user", user);
   const claims = {
     id: user._id,
-    email: user.email,
-    name: user.name || user.profile.name
+    name: user.name,
+    email: user.email
   };
 
   return jToken.sign(claims, process.env.JWT_SECRET);
