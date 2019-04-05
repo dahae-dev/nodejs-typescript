@@ -42,7 +42,7 @@ passport.use(
 
       // User not found.
       if (!user)  {
-        console.log("[-] LocalStrategy : no user found.")
+        console.log("[-] LocalStrategy : no user found.");
         return done(undefined, false, { message: `Email ${email} not found.` });
       }
 
