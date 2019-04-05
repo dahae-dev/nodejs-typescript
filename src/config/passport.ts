@@ -102,6 +102,8 @@ passport.use(
               if (err) {
                 return done(err);
               }
+              user.provider = "facebook";
+              user.providerId = profile.id;
               user.facebook = profile.id;
               user.tokens.push({ kind: "facebook", accessToken });
               user.profile.name = user.profile.name || `${profile.name.givenName} ${profile.name.familyName}`;
@@ -137,6 +139,8 @@ passport.use(
               done(err);
             } else {
               const user: any = new User();
+              user.provider = "facebook";
+              user.providerId = profile.id;
               user.email = profile._json.email;
               user.facebook = profile.id;
               user.tokens.push({ kind: "facebook", accessToken });
