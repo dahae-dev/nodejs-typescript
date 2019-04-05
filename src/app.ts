@@ -15,8 +15,8 @@ import expressValidator from "express-validator";
 import bluebird from "bluebird";
 import cors from "cors";
 
-import { CLIENT_BASE_URL, MONGODB_URI, SESSION_SECRET } from "./util/secrets";
 import * as token from "./util/token";
+import { CLIENT_BASE_URL, MONGODB_URI, SESSION_SECRET } from "./util/secrets";
 
 const MongoStore = mongo(session);
 
@@ -28,8 +28,8 @@ import * as homeController from "./controllers/home";
 import * as userController from "./controllers/user";
 import * as apiController from "./controllers/api";
 import * as contactController from "./controllers/contact";
+import * as authController from "./controllers/auth";
 
-// API keys and Passport configuration
 import * as passportConfig from "./config/passport";
 
 // Create Express server
@@ -136,20 +136,18 @@ app.post("/account/delete", passportConfig.isAuthenticated, userController.postD
 app.get("/account/unlink/:provider", passportConfig.isAuthenticated, userController.getOauthUnlink);
 
 /**
- * API examples routes.
- */
-// app.get("/api", apiController.getApi);
-// app.get("/api/facebook", passportConfig.isAuthenticated, passportConfig.isAuthorized, apiController.getFacebook);
-
-/**
  * OAuth authentication routes. (Sign in)
  */
 app.get("/auth/facebook", passport.authenticate("facebook", { scope: ["email", "public_profile"] }));
 app.get("/auth/facebook/callback", passport.authenticate("facebook", { failureRedirect: "/login" }), (req, res) => {
   // console.log("TCL: [*] /auth/facebook/callback : req.user = ", req.user);
 
-  const myToken = token.generateToken(req.user);
-  res.redirect(`${CLIENT_BASE_URL}/temp?start="auth"&token=${myToken}&userId=${req.user.id}&end="end"`);
+  res.redirect("/auth/additionalInfo");
 });
+
+app.get("/auth/additionalInfo", authController.getAdditionalInfo);
+app.post("/auth/additionalInfo", authController.postAdditionalInfo);
+
+app.get("/auth/token", authController.getToken);
 
 export default app;

@@ -182,7 +182,7 @@ export let postUpdateProfile = (req: Request, res: Response, next: NextFunction)
     return res.redirect("/account");
   }
 
-  User.findById(req.user.id, (err, user: UserModel) => {
+  User.findById(req.user.id, (err, user: any) => {
     if (err) {
       return next(err);
     }
