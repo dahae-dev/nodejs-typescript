@@ -31,10 +31,10 @@ passport.use(
   new LocalStrategy({ usernameField: "email", passwordField: "password" }, (email, password, done) => {
     // console.log("TCL: LocalStrategy");
 
-    const user = User.findOne({ email: email.toLocaleLowerCase() });
+    const user = User.findOne({ provider: "local", email: email.toLocaleLowerCase() });
     // console.log("TCL: LocalStrategy --> user", user);
 
-    User.findOne({ email: email.toLowerCase() }, (err, user: any) => {
+    User.findOne({ provider: "local", email: email.toLowerCase() }, (err, user: any) => {
       if (err) return done(err);
 
       // User not found.
