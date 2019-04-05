@@ -53,12 +53,12 @@ export let postSignup = (req: Request, res: Response, next: NextFunction) => {
     email,
     password,
     phone,
-    provider: 'local',
-    providerId: ''
+    provider: "local",
+    providerId: ""
   });
 
   // User.findOne({ email: req.body.email }, (err, existingUser) => {
-  User.findOne({ provider: 'local', email }, (err, existingUser) => {
+  User.findOne({ provider: "local", email }, (err, existingUser) => {
     // Error
     if (err) return next(err);
 
@@ -117,7 +117,7 @@ export let postLogin = (req: Request, res: Response, next: NextFunction) => {
     // console.log("TCL: postLogin -> errors", errors);
     req.flash("errors", errors);
     // return res.redirect("/login");
-    return res.status(400).send(`Login failed : ${err}`);
+    return res.status(400).send(`Login failed.`);
   }
 
   passport.authenticate("local", (err: Error, user: UserModel, info: IVerifyOptions) => {
