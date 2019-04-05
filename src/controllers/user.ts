@@ -47,14 +47,18 @@ export let postSignup = (req: Request, res: Response, next: NextFunction) => {
 
   // console.log("TCL: postSignup -> user", req.body);
 
-  const { name, email, password } = req.body;
+  const { name, email, password, phone} = req.body;
   const user = new User({
     name,
     email,
-    password
+    password,
+    phone,
+    provider: 'local',
+    providerId: ''
   });
 
-  User.findOne({ email: req.body.email }, (err, existingUser) => {
+  // User.findOne({ email: req.body.email }, (err, existingUser) => {
+  User.findOne({ provider: 'local', email }, (err, existingUser) => {
     // Error
     if (err) return next(err);
 
@@ -80,6 +84,8 @@ export let postSignup = (req: Request, res: Response, next: NextFunction) => {
           .header("x-auth-token", myToken)
           .header("access-control-expose-headers", "x-auth-token")
           .send(_.pick(user, "_id", "name", "email"));
+
+        // token.sendResponseWithTokenInHeader(res, user);
       });
     });
   });
@@ -92,10 +98,6 @@ export let postSignup = (req: Request, res: Response, next: NextFunction) => {
 export let getLogin = (req: Request, res: Response) => {
   if (req.user) return res.redirect(`${CLIENT_BASE_URL}`);
   else return res.redirect(`${CLIENT_BASE_URL}/login`);
-
-  // res.render("account/login", {
-  //   title: "Login"
-  // });
 };
 
 /**
@@ -115,12 +117,15 @@ export let postLogin = (req: Request, res: Response, next: NextFunction) => {
     // console.log("TCL: postLogin -> errors", errors);
     req.flash("errors", errors);
     // return res.redirect("/login");
-    return res.status(400).send("Login failed.");
+    return res.status(400).send(`Login failed : ${err}`);
   }
 
   passport.authenticate("local", (err: Error, user: UserModel, info: IVerifyOptions) => {
     // Error
-    if (err) return res.status(400).send("Error occurred.");
+    if (err) {
+      console.log(err);
+      return res.status(400).send(`Login failed : ${err}`);
+    }
 
     // No user with that email
     if (!user) {
