@@ -35,19 +35,32 @@ passport.use(
     // console.log("TCL: LocalStrategy --> user", user);
 
     User.findOne({ provider: "local", email: email.toLowerCase() }, (err, user: any) => {
-      if (err) return done(err);
+      if (err) {
+        console.log("[-] LocalStrategy : DB Error occurred during finding user. ", err);
+        return done(err);
+      }
 
       // User not found.
-      if (!user) return done(undefined, false, { message: `Email ${email} not found.` });
+      if (!user)  {
+        console.log("[-] LocalStrategy : no user found.")
+        return done(undefined, false, { message: `Email ${email} not found.` });
+      }
 
       user.comparePassword(password, (err: Error, isMatch: boolean) => {
         // Error during comapring password.
-        if (err) return done(err);
+        if (err) {
+          console.log("[-] LocalStrategy : Error occurred during comparing user password.", err);
+          return done(err);
+        }
 
         // OK. Pasword matched.
-        if (isMatch) return done(undefined, user);
+        if (isMatch) {
+          console.log("[+] LocalStrategy : password matched.");
+          return done(undefined, user);
+        }
 
         // NOK. Password not matched.
+        console.log("[-] LocalStrategy : password is not matched.");
         return done(undefined, false, { message: "Invalid email or password." });
       });
     });
