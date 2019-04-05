@@ -20,7 +20,7 @@ export const generateToken = (user: any): string => {
   return jToken.sign(claims, process.env.JWT_SECRET);
 };
 
-export const sendResponseWithTokenInHeader = (res: Response, user: UserModel) => {
+export const sendResponseWithTokenInHeader = (res: Response, user: any) => {
   const myToken = generateToken(user);
   return res
     .header("x-auth-token", myToken)
