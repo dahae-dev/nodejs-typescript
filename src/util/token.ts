@@ -14,7 +14,8 @@ export const generateToken = (user: any): string => {
   const claims = {
     id: user._id,
     name: user.name,
-    email: user.email
+    email: user.email,
+    phone: user.phone
   };
 
   return jToken.sign(claims, process.env.JWT_SECRET);
@@ -25,5 +26,5 @@ export const sendResponseWithTokenInHeader = (res: Response, user: any) => {
   return res
     .header("x-auth-token", myToken)
     .header("access-control-expose-headers", "x-auth-token")
-    .send(_.pick(user, "_id", "name", "email"));
+    .send(_.pick(user, "_id", "name", "email", "phone"));
 };
