@@ -25,6 +25,7 @@ const MongoStore = mongo(session);
 
 // Controllers (route handlers)
 import * as homeController from "./controllers/home";
+import * as paymentController from "./controllers/payment";
 import * as userController from "./controllers/user";
 import * as apiController from "./controllers/api";
 import * as contactController from "./controllers/contact";
@@ -117,7 +118,8 @@ app.use((req, res, next) => {
  * Primary app routes.
  */
 // TODO: Payment test
-app.get("/payment", homeController.index);
+app.get("/", homeController.index);
+app.get("/payment", paymentController.index);
 
 app.get("/signup", userController.getSignup);
 app.post("/signup", userController.postSignup);
