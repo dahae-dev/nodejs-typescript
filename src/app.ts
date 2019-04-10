@@ -116,7 +116,8 @@ app.use((req, res, next) => {
 /**
  * Primary app routes.
  */
-app.get("/", homeController.index);
+// TODO: Payment test
+app.get("/payment", homeController.index);
 
 app.get("/signup", userController.getSignup);
 app.post("/signup", userController.postSignup);
