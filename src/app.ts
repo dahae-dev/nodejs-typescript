@@ -29,6 +29,7 @@ import * as userController from "./controllers/user";
 import * as apiController from "./controllers/api";
 import * as contactController from "./controllers/contact";
 import * as authController from "./controllers/auth";
+import * as couponController from "./controllers/coupon";
 
 import * as passportConfig from "./config/passport";
 
@@ -150,5 +151,10 @@ app.get("/auth/additionalInfo", authController.getAdditionalInfo);
 app.post("/auth/additionalInfo", authController.postAdditionalInfo);
 
 app.get("/auth/token", authController.getToken);
+
+/**
+ * coupon
+ */
+app.get("/coupon", couponController.check);
 
 export default app;
