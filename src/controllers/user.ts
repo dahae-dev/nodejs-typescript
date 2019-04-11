@@ -47,7 +47,7 @@ export let postSignup = (req: Request, res: Response, next: NextFunction) => {
 
   // console.log("TCL: postSignup -> user", req.body);
 
-  const { name, email, password, phone} = req.body;
+  const { name, email, password, phone } = req.body;
   const user = new User({
     name,
     email,
@@ -68,7 +68,7 @@ export let postSignup = (req: Request, res: Response, next: NextFunction) => {
       return res.redirect(`${CLIENT_BASE_URL}/login`);
     }
     // New User
-    user.save(err => {
+    user.save((err: WriteError) => {
       if (err) return next(err);
 
       req.logIn(user, err => {

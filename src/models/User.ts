@@ -2,6 +2,37 @@ import bcrypt from "bcrypt-nodejs";
 import crypto from "crypto";
 import mongoose from "mongoose";
 
+interface IUser {
+  _id: string;
+  email: string;
+  password: string;
+  name: string;
+  phone: string;
+  passwordResetToken: string;
+  passwordResetExpires: Date;
+
+  provider: string;
+  providerId: string;
+
+  facebook: string;
+  tokens: AuthToken[];
+
+  profile: {
+    name: string;
+    gender: string;
+    location: string;
+    website: string;
+    picture: string;
+  };
+
+  comparePassword: comparePasswordFunction;
+  gravatar: (size: number) => string;
+}
+
+interface IUserModel extends IUser, mongoose.Document {
+  _id: string;
+}
+
 export type UserModel = mongoose.Document & {
   _id?: string;
   email: string;
@@ -111,6 +142,8 @@ userSchema.methods.gravatar = function(size: number) {
   return `https://gravatar.com/avatar/${md5}?s=${size}&d=retro`;
 };
 
-// export const User: UserType = mongoose.model<UserType>('User', userSchema);
-const User = mongoose.model("User", userSchema);
+// reference: https://stackoverflow.com/questions/37926481/mongoose-typescript-exporting-model-interface
+export const User: mongoose.Model<IUserModel> = mongoose.model<IUserModel>("User", userSchema);
+// export const User: UserType = mongoose.model<UserType>("User", userSchema);
+// const User = mongoose.model("User", userSchema);
 export default User;
