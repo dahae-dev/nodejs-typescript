@@ -1,8 +1,14 @@
 import { Request, Response } from "express";
-import { default as Payment } from "../models/Payment.mongo";
-import { getPaymentData, getPaymentDataByMerchantUid } from "../util/iamport";
 import * as moment from "moment";
+import axios from "axios";
+
+import { default as Payment } from "../models/Payment.mongo";
+import { getPaymentData } from "../util/iamport";
 import addCommaSeparator from "../util/addCommaSeparator";
+import { sendEmail } from "../util/emails";
+
+const slackWebHookURL = "https://hooks.slack.com/services/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";
+
 export let test = (req: Request, res: Response) => {
   const payment: any = new Payment();
   payment.status = "good";
@@ -63,6 +69,10 @@ export const handleNotification = async (req: Request, res: Response) => {
     const {
       amount,
       status,
+      buyer_name,
+      buyer_email,
+      buyer_tel,
+      name,
       cancel_amount,
       pay_method,
       card_name,
@@ -70,13 +80,14 @@ export const handleNotification = async (req: Request, res: Response) => {
       merchant_uid,
       pg_tid,
       vbank_name,
-      vbank_date,
       vbank_holder,
       vbank_num
     } = impPayment;
-    let { paid_at } = impPayment; // 0
+    let { paid_at, vbank_date } = impPayment; // 0
     paid_at = moment.unix(paid_at).format("YYYY-MM-DD HH:mm:ss");
+    vbank_date = moment.unix(vbank_date).format("YYYY-MM-DD HH:mm:ss");
     console.log("***** paid_at: ", paid_at);
+    console.log("***** vbank_date: ", vbank_date);
 
     const payment = await Payment.findOne({
       merchant_uid
@@ -85,7 +96,7 @@ export const handleNotification = async (req: Request, res: Response) => {
     const amountToBePaid = payment.amount;
 
     if (amount === amountToBePaid) {
-      const updateResult = await Payment.update(
+      const updatedPayment = await Payment.update(
         { merchant_uid },
         {
           amount,
@@ -103,14 +114,32 @@ export const handleNotification = async (req: Request, res: Response) => {
           channel
         }
       );
-      console.log("***** updateResult: ", updateResult);
+      console.log("***** updatedPayment: ", updatedPayment);
 
       const amountWithCommaSeparator = addCommaSeparator(amount);
-      // console.log("***** amount w/ comma: ", amountWithCommaSeparator);
+      const paidBy = pay_method === "card" ? "카드" : "가상계좌";
+
+      // const pathToTemplate = "apply";
+      const recipient = buyer_email;
+      const localVar = {
+        name: buyer_name,
+        course: name,
+        amount: amountWithCommaSeparator,
+        vbank_name,
+        vbank_date,
+        vbank_num
+      };
 
       switch (status) {
         case "ready":
-          // TODO: 가상계좌 발급 안내메일 or 문자 발송
+          let sendEmailResult = await sendEmail(status, recipient, localVar);
+          console.log("***** sendEmailResult @ready: ", sendEmailResult); // undefined
+          // TODO: must wrap below update sent_mail flag only if sendEmailResult is successfull
+          let updateSentMailPayment = await updatedPayment.update({
+            mail_sent: true
+          });
+          console.log("***** updatedSentMailPayment @ready", updateSentMailPayment);
+
           res.send({
             status,
             message: "가상계좌 발급 성공"
@@ -118,7 +147,18 @@ export const handleNotification = async (req: Request, res: Response) => {
           break;
 
         case "paid":
-          // TODO: 결제 완료 안내메일 or 문자 발송
+          sendEmailResult = await sendEmail(status, recipient, localVar);
+          console.log("***** sendEmailResult @paid: ", sendEmailResult); // undefined
+          // TODO: must wrap below update sent_mail flag only if sendEmailResult is successfull
+          updateSentMailPayment = await updatedPayment.update({
+            mail_sent: true
+          });
+          console.log("***** updatedSentMailPayment @paid", updateSentMailPayment);
+
+          await axios.post(slackWebHookURL, {
+            text: `\n스터디: ${name}\n이름: ${buyer_name}\n이메일: ${buyer_email}\n연락처: ${buyer_tel}\n결제금액: ${amountWithCommaSeparator} KRW\n결제수단: ${paidBy}\n결제번호: ${merchant_uid}\nimp_uid: ${imp_uid}`
+          });
+
           res.send({
             status,
             message: "결제 완료"
@@ -126,6 +166,12 @@ export const handleNotification = async (req: Request, res: Response) => {
           break;
 
         default:
+          if (status === "cancelled") {
+            await axios.post(slackWebHookURL, {
+              text: `결제 취소입니다\n스터디: ${name}\n이름: ${buyer_name}\n이메일: ${buyer_email}\n연락처: ${buyer_tel}\n취소금액: ${amountWithCommaSeparator} KRW\n결제번호: ${merchant_uid}\nimp_uid: ${imp_uid}`
+            });
+          }
+
           res.send({
             status,
             message: "미결제"
