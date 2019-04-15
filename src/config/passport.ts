@@ -8,7 +8,7 @@ import { CLIENT_BASE_URL, FACEBOOK_ID, FACEBOOK_SECRET, FACEBOOK_CALLBACK_URL } 
 import { sendResponseWithTokenInHeader } from "../util/token";
 
 // import { User, UserType } from '../models/User';
-import { default as User } from "../models/User";
+import { default as User } from "../models/User.mongo";
 import { Request, Response, NextFunction } from "express";
 
 const LocalStrategy = passportLocal.Strategy;
@@ -41,7 +41,7 @@ passport.use(
       }
 
       // User not found.
-      if (!user)  {
+      if (!user) {
         console.log("[-] LocalStrategy : no user found.");
         return done(undefined, false, { message: `Email ${email} not found.` });
       }
