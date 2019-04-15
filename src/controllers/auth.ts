@@ -3,7 +3,7 @@ import { WriteError } from "mongodb";
 
 import * as token from "../util/token";
 import { CLIENT_BASE_URL } from "../util/secrets";
-import { default as User, UserModel, AuthToken } from "../models/User";
+import { default as User, UserModel, AuthToken } from "../models/User.mongo";
 
 export let getAdditionalInfo = (req: Request, res: Response) => {
   const { user } = req;
@@ -12,7 +12,7 @@ export let getAdditionalInfo = (req: Request, res: Response) => {
   // No personal info when social locain used.
   if (!user.email || !user.phone) {
     res.redirect(`${CLIENT_BASE_URL}/submitAdditionalInfo?start="auth"&id=${id}&end="end"`);
-  // We got personal info. Just re-direct to give token.
+    // We got personal info. Just re-direct to give token.
   } else {
     res.redirect("/auth/token");
   }

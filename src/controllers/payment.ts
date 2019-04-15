@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { default as Payment } from "../models/Payment";
+import { default as Payment } from "../models/Payment.mongo";
 import { getPaymentData, getPaymentDataByMerchantUid } from "../util/iamport";
 import * as moment from "moment";
 import addCommaSeparator from "../util/addCommaSeparator";
