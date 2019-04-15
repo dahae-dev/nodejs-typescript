@@ -130,14 +130,20 @@ export const handleNotification = async (req: Request, res: Response) => {
         vbank_num
       };
 
+      let sendEmailResult;
+      let updateSentMailPayment;
+
       switch (status) {
         case "ready":
-          let sendEmailResult = await sendEmail(status, recipient, localVar);
+          sendEmailResult = await sendEmail(status, recipient, localVar);
           console.log("***** sendEmailResult @ready: ", sendEmailResult); // undefined
           // TODO: must wrap below update sent_mail flag only if sendEmailResult is successfull
-          let updateSentMailPayment = await updatedPayment.update({
-            mail_sent: true
-          });
+          updateSentMailPayment = await Payment.update(
+            { merchant_uid },
+            {
+              mail_sent: true
+            }
+          );
           console.log("***** updatedSentMailPayment @ready", updateSentMailPayment);
 
           res.send({
@@ -150,9 +156,12 @@ export const handleNotification = async (req: Request, res: Response) => {
           sendEmailResult = await sendEmail(status, recipient, localVar);
           console.log("***** sendEmailResult @paid: ", sendEmailResult); // undefined
           // TODO: must wrap below update sent_mail flag only if sendEmailResult is successfull
-          updateSentMailPayment = await updatedPayment.update({
-            mail_sent: true
-          });
+          updateSentMailPayment = await Payment.update(
+            { merchant_uid },
+            {
+              mail_sent: true
+            }
+          );
           console.log("***** updatedSentMailPayment @paid", updateSentMailPayment);
 
           await axios.post(slackWebHookURL, {
