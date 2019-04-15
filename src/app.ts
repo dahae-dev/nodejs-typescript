@@ -163,7 +163,6 @@ app.get("/coupon", couponController.check);
  */
 app.get("/payment", paymentController.test);
 app.post("/payment", paymentController.handlePayment);
-app.post("/payment/complete", paymentController.handleCompletePayment);
 app.post("/payment/notification", paymentController.handleNotification);
 
 export default app;
