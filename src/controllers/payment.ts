@@ -1,9 +1,10 @@
 import { Request, Response } from "express";
+
 import * as moment from "moment";
 import axios from "axios";
 
-import { default as Payment } from "../models/Payment.mongo";
-import { getPaymentData } from "../util/iamport";
+import { default as Payment } from "../models/Payment";
+import { getPaymentData, getPaymentDataByMerchantUid } from "../util/iamport";
 import addCommaSeparator from "../util/addCommaSeparator";
 import { sendEmail } from "../util/emails";
 

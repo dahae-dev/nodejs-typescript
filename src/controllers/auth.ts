@@ -3,7 +3,7 @@ import { WriteError } from "mongodb";
 
 import * as token from "../util/token";
 import { CLIENT_BASE_URL } from "../util/secrets";
-import { default as User, UserModel, AuthToken } from "../models/User.mongo";
+import { default as User, UserModel, AuthToken } from "../models/User";
 
 export let getAdditionalInfo = (req: Request, res: Response) => {
   const { user } = req;

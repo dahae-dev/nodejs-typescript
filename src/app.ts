@@ -9,15 +9,25 @@ import dotenv from "dotenv";
 import mongo from "connect-mongo";
 import flash from "express-flash";
 import path from "path";
+import "reflect-metadata";
 import mongoose from "mongoose";
 import passport from "passport";
 import expressValidator from "express-validator";
 import bluebird from "bluebird";
 import cors from "cors";
+import "reflect-metadata";
+import { createConnection } from "typeorm";
+import { Photo } from "./entity/Photo";
 
 import * as token from "./util/token";
 import { CLIENT_BASE_URL, MONGODB_URI, SESSION_SECRET } from "./util/secrets";
 
+createConnection()
+  .then(connection => {
+    console.log(`[+] TypeORM connection done.`);
+  })
+  .catch(error => console.log(`[-] TypeORM Error : ${error}`));
+// MongoDB
 const MongoStore = mongo(session);
 
 // Load environment variables from .env file, where API keys and passwords are configured

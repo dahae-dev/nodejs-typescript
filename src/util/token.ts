@@ -3,7 +3,7 @@ import _ from "underscore";
 
 import { Response } from "express";
 
-import { UserModel } from "../models/User.mongo";
+import { UserModel } from "../models/User";
 export interface IUser {
   _id: string;
   email: string;

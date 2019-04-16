@@ -9,7 +9,7 @@ import { WriteError } from "mongodb";
 import _ from "underscore";
 
 import { CLIENT_BASE_URL } from "../util/secrets";
-import { default as User, UserModel, AuthToken } from "../models/User.mongo";
+import { default as User, UserModel, AuthToken } from "../models/User";
 import * as token from "../util/token";
 import "../config/passport";
 const request = require("express-validator");

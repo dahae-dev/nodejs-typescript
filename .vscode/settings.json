@@ -14,5 +14,10 @@
         "csrf",
         "definitelytyped",
         "promisified"
-    ]
+    ],
+    "workbench.colorCustomizations": {
+        "activityBar.background": "#093337",
+        "titleBar.activeBackground": "#0C474D",
+        "titleBar.activeForeground": "#F4FCFD"
+    }
 }
