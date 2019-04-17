@@ -8,11 +8,18 @@ import { default as UserMongo, UserModel, AuthToken } from "../models/User";
 import { User } from "../entity/User";
 export let getAdditionalInfo = (req: Request, res: Response) => {
   const { user } = req;
-  const { _id: id } = req.user;
+  let userId;
+  if (DATABASE_TYPE === "TYPEORM") {
+    const { id } = req.user;
+    userId = id;
+  } else {
+    const { _id: id } = req.user;
+    userId = id;
+  }
 
   // No personal info when social locain used.
   if (!user.email || !user.phone) {
-    res.redirect(`${CLIENT_BASE_URL}/submitAdditionalInfo?start="auth"&id=${id}&end="end"`);
+    res.redirect(`${CLIENT_BASE_URL}/submitAdditionalInfo?start="auth"&id=${userId}&end="end"`);
     // We got personal info. Just re-direct to give token.
   } else {
     res.redirect("/auth/token");
@@ -21,15 +28,16 @@ export let getAdditionalInfo = (req: Request, res: Response) => {
 
 export let postAdditionalInfo = async (req: Request, res: Response) => {
   const { id, name, email, phone } = req.body;
-  // console.log("TCL: postAdditionalInfo -> req.body", req.body);
 
   // TypeORM
   if (DATABASE_TYPE === "TYPEORM") {
     const userRepository = getRepository(User);
     const user = await userRepository.findOne({ id });
+
     user.name = name;
     user.email = email;
     user.phone = phone;
+
     await userRepository.save(user);
     token.sendResponseWithTokenInHeader(res, user);
   } else {

@@ -15,5 +15,6 @@ echo "[+] Remove old version repository"
 echo "[+] Make folder for new version"
 mkdir -p /home/ubuntu/studystates-server/dev
 cp /home/ubuntu/studystates-server/.env.development /home/ubuntu/studystates-server/dev
+cp /home/ubuntu/studystates-server/ormconfig.json /home/ubuntu/studystates-server/dev
 
 echo "[+] End deploy-clean."
