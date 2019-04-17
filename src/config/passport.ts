@@ -20,10 +20,17 @@ passport.serializeUser<any, any>((user, done) => {
   done(undefined, user.id);
 });
 
-passport.deserializeUser((id, done) => {
-  UserMongo.findById(id, (err, user) => {
-    done(err, user);
-  });
+passport.deserializeUser(async (id, done) => {
+  // console.log("TCL: passport.deserializeUser : id = ", id);
+
+  if (DATABASE_TYPE === "TYPEORM") {
+    const user = await getRepository(User).findOne({ id: id as number });
+    done(undefined, user);
+  } else {
+    UserMongo.findById(id, (err, user) => {
+      done(err, user);
+    });
+  }
 });
 
 /**
@@ -35,8 +42,10 @@ passport.use(
 
     // * TypeORM
     if (DATABASE_TYPE === "TYPEORM") {
-      // const userRepository = getRepository(User);
-      const user = await getRepository(User).findOne({
+      // Session exsits
+
+      const userRepository = getRepository(User);
+      const user = await userRepository.findOne({
         provider: "local",
         email: email.toLocaleLowerCase()
       });
@@ -134,83 +143,109 @@ passport.use(
       profileFields: ["name", "email", "link", "locale", "timezone"],
       passReqToCallback: true
     },
-    (req: any, accessToken, refreshToken, profile, done) => {
-      // Session exists.
-      if (req.user) {
-        UserMongo.findOne({ facebook: profile.id }, (err, existingUser) => {
-          if (err) {
-            return done(err);
-          }
-          if (existingUser) {
-            req.flash("errors", {
-              msg:
-                "There is already a Facebook account that belongs to you. Sign in with that account or delete it, then link it with your current account."
-            });
-            // console.log("TCL: existingUser", existingUser);
-            // done(err);
-            // * : Changed to give JWT token for existingUser login.
-            done(err, existingUser);
-          } else {
-            UserMongo.findById(req.user.id, (err, user: any) => {
-              if (err) {
-                return done(err);
-              }
-              user.provider = "facebook";
-              user.providerId = profile.id;
-              user.email = "";
-              user.name = "";
-              user.facebook = profile.id;
-              user.tokens.push({ kind: "facebook", accessToken });
-              user.profile.name = user.profile.name || `${profile.name.givenName} ${profile.name.familyName}`;
-              user.profile.gender = user.profile.gender || profile._json.gender;
-              user.profile.picture =
-                user.profile.picture || `https://graph.facebook.com/${profile.id}/picture?type=large`;
-              user.save((err: Error) => {
-                req.flash("info", { msg: "Facebook account has been linked." });
-                done(err, user);
-              });
-            });
-          }
+    async (req: any, accessToken, refreshToken, profile, done) => {
+      // console.log("TCL: [*] FacebookStrategy");
+
+      // TypeORM
+      if (DATABASE_TYPE === "TYPEORM") {
+        const userRepository = getRepository(User);
+        const existingUser = await userRepository.findOne({
+          provider: "facebook",
+          providerId: profile.id
         });
-        // No session user
+
+        // Existing user
+        if (existingUser) {
+          // console.log("TCL: [+] FacebookStrategy : existingUser = ", existingUser);
+          return done(undefined, existingUser);
+        }
+
+        // New User via Facebook
+        const user = new User();
+        user.provider = "facebook";
+        user.providerId = profile.id;
+        await userRepository.save(user);
+
+        // console.log("TCL: [+] FacebookStrategy : user = ", user);
+        done(undefined, user);
       } else {
-        UserMongo.findOne({ facebook: profile.id }, (err, existingUser) => {
-          if (err) {
-            return done(err);
-          }
-          if (existingUser) {
-            // console.log("TCL: [*] existingUser", existingUser);
-            return done(undefined, existingUser);
-          }
-          UserMongo.findOne({ email: profile._json.email }, (err, existingEmailUser) => {
+        // Session exists.
+        if (req.user) {
+          UserMongo.findOne({ facebook: profile.id }, (err, existingUser) => {
             if (err) {
               return done(err);
             }
-            if (existingEmailUser) {
+            if (existingUser) {
               req.flash("errors", {
                 msg:
-                  "There is already an account using this email address. Sign in to that account and link it with Facebook manually from Account Settings."
+                  "There is already a Facebook account that belongs to you. Sign in with that account or delete it, then link it with your current account."
               });
-              done(err);
+              // console.log("TCL: existingUser", existingUser);
+              // done(err);
+              // * : Changed to give JWT token for existingUser login.
+              done(err, existingUser);
             } else {
-              const user: any = new UserMongo();
-              user.provider = "facebook";
-              user.providerId = profile.id;
-              user.email = "";
-              user.name = "";
-              user.facebook = profile.id;
-              user.tokens.push({ kind: "facebook", accessToken });
-              user.profile.name = `${profile.name.givenName} ${profile.name.familyName}`;
-              user.profile.gender = profile._json.gender;
-              user.profile.picture = `https://graph.facebook.com/${profile.id}/picture?type=large`;
-              user.profile.location = profile._json.location ? profile._json.location.name : "";
-              user.save((err: Error) => {
-                // console.log("TCL: [+] Facebook first registration done.");
-                done(err, user);
+              UserMongo.findById(req.user.id, (err, user: any) => {
+                if (err) {
+                  return done(err);
+                }
+                user.provider = "facebook";
+                user.providerId = profile.id;
+                user.email = "";
+                user.name = "";
+                user.facebook = profile.id;
+                user.tokens.push({ kind: "facebook", accessToken });
+                user.profile.name = user.profile.name || `${profile.name.givenName} ${profile.name.familyName}`;
+                user.profile.gender = user.profile.gender || profile._json.gender;
+                user.profile.picture =
+                  user.profile.picture || `https://graph.facebook.com/${profile.id}/picture?type=large`;
+                user.save((err: Error) => {
+                  req.flash("info", { msg: "Facebook account has been linked." });
+                  done(err, user);
+                });
               });
             }
           });
-        });
+          // No session user
+        } else {
+          UserMongo.findOne({ facebook: profile.id }, (err, existingUser) => {
+            if (err) {
+              return done(err);
+            }
+            if (existingUser) {
+              // console.log("TCL: [*] existingUser", existingUser);
+              return done(undefined, existingUser);
+            }
+            UserMongo.findOne({ email: profile._json.email }, (err, existingEmailUser) => {
+              if (err) {
+                return done(err);
+              }
+              if (existingEmailUser) {
+                req.flash("errors", {
+                  msg:
+                    "There is already an account using this email address. Sign in to that account and link it with Facebook manually from Account Settings."
+                });
+                done(err);
+              } else {
+                const user: any = new UserMongo();
+                user.provider = "facebook";
+                user.providerId = profile.id;
+                user.email = "";
+                user.name = "";
+                user.facebook = profile.id;
+                user.tokens.push({ kind: "facebook", accessToken });
+                user.profile.name = `${profile.name.givenName} ${profile.name.familyName}`;
+                user.profile.gender = profile._json.gender;
+                user.profile.picture = `https://graph.facebook.com/${profile.id}/picture?type=large`;
+                user.profile.location = profile._json.location ? profile._json.location.name : "";
+                user.save((err: Error) => {
+                  // console.log("TCL: [+] Facebook first registration done.");
+                  done(err, user);
+                });
+              }
+            });
+          });
+        }
       }
     }
   )

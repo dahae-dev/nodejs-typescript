@@ -36,10 +36,12 @@ export class User {
 
   @BeforeInsert()
   updatePasswordHash() {
-    // TODO: In Async mode, password hash value is NOT updated. Why ?
-    const salt = bcrypt.genSaltSync(10);
-    const hash = bcrypt.hashSync(this.password, salt);
-    this.password = hash;
+    if (this.provider === "local") {
+      // TODO: In Async mode, password hash value is NOT updated. Why ?
+      const salt = bcrypt.genSaltSync(10);
+      const hash = bcrypt.hashSync(this.password, salt);
+      this.password = hash;
+    }
 
     // Async
     // bcrypt.genSalt(10, (err, salt) => {

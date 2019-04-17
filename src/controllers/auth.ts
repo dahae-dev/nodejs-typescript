@@ -1,10 +1,11 @@
 import { Request, Response } from "express";
+import { getRepository } from "typeorm";
 import { WriteError } from "mongodb";
 
 import * as token from "../util/token";
-import { CLIENT_BASE_URL } from "../util/secrets";
-import { default as User, UserModel, AuthToken } from "../models/User";
-
+import { CLIENT_BASE_URL, DATABASE_TYPE } from "../util/secrets";
+import { default as UserMongo, UserModel, AuthToken } from "../models/User";
+import { User } from "../entity/User";
 export let getAdditionalInfo = (req: Request, res: Response) => {
   const { user } = req;
   const { _id: id } = req.user;
@@ -22,19 +23,30 @@ export let postAdditionalInfo = async (req: Request, res: Response) => {
   const { id, name, email, phone } = req.body;
   // console.log("TCL: postAdditionalInfo -> req.body", req.body);
 
-  User.findById(id, (err, user: UserModel) => {
-    // if (err) error handling
+  // TypeORM
+  if (DATABASE_TYPE === "TYPEORM") {
+    const userRepository = getRepository(User);
+    const user = await userRepository.findOne({ id });
     user.name = name;
     user.email = email;
     user.phone = phone;
+    await userRepository.save(user);
+    token.sendResponseWithTokenInHeader(res, user);
+  } else {
+    UserMongo.findById(id, (err, user: UserModel) => {
+      // if (err) error handling
+      user.name = name;
+      user.email = email;
+      user.phone = phone;
 
-    user.save((err: WriteError) => {
-      // if (err) error hadling
-      // req.flash("success", { msg: "Profile information has been updated." });
+      user.save((err: WriteError) => {
+        // if (err) error hadling
+        // req.flash("success", { msg: "Profile information has been updated." });
 
-      token.sendResponseWithTokenInHeader(res, user);
+        token.sendResponseWithTokenInHeader(res, user);
+      });
     });
-  });
+  }
 };
 
 // INFO: When client can't take the respons like using a href link, make client redirect to /temp via authController.
