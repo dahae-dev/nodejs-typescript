@@ -66,3 +66,9 @@ if (!SENDGRID_USER || !SENDGRID_PASSWORD) {
   logger.error("No mongo connection string. Set SENDGRID_USER or SENDGRID_PASSWORD environment variable.");
   process.exit(1);
 }
+
+export const DATABASE_TYPE = process.env.DATABASE_TYPE;
+if (!DATABASE_TYPE) {
+  logger.error("No DATABASE configuration. Set DATABASE_TYPE environment variable.");
+  process.exit(1);
+}

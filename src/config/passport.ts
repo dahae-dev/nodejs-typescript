@@ -1,15 +1,17 @@
+import { Request, Response, NextFunction } from "express";
 import passport from "passport";
-import request from "request";
 import passportLocal from "passport-local";
 import passportFacebook from "passport-facebook";
+import { getRepository } from "typeorm";
 import _ from "underscore";
 
-import { CLIENT_BASE_URL, FACEBOOK_ID, FACEBOOK_SECRET, FACEBOOK_CALLBACK_URL } from "../util/secrets";
+import { CLIENT_BASE_URL, FACEBOOK_ID, FACEBOOK_SECRET, FACEBOOK_CALLBACK_URL, DATABASE_TYPE } from "../util/secrets";
 import { sendResponseWithTokenInHeader } from "../util/token";
+import comparePassword from "../util/password";
 
 // import { User, UserType } from '../models/User';
-import { default as User } from "../models/User";
-import { Request, Response, NextFunction } from "express";
+import { default as UserMongo } from "../models/User";
+import { User } from "../entity/User";
 
 const LocalStrategy = passportLocal.Strategy;
 const FacebookStrategy = passportFacebook.Strategy;
@@ -19,7 +21,7 @@ passport.serializeUser<any, any>((user, done) => {
 });
 
 passport.deserializeUser((id, done) => {
-  User.findById(id, (err, user) => {
+  UserMongo.findById(id, (err, user) => {
     done(err, user);
   });
 });
@@ -28,25 +30,27 @@ passport.deserializeUser((id, done) => {
  * Sign in using Email and Password.
  */
 passport.use(
-  new LocalStrategy({ usernameField: "email", passwordField: "password" }, (email, password, done) => {
+  new LocalStrategy({ usernameField: "email", passwordField: "password" }, async (email, password, done) => {
     // console.log("TCL: LocalStrategy");
 
-    const user = User.findOne({ provider: "local", email: email.toLocaleLowerCase() });
-    // console.log("TCL: LocalStrategy --> user", user);
-
-    User.findOne({ provider: "local", email: email.toLowerCase() }, (err, user: any) => {
-      if (err) {
-        console.log("[-] LocalStrategy : DB Error occurred during finding user. ", err);
-        return done(err);
-      }
+    // * TypeORM
+    if (DATABASE_TYPE === "TYPEORM") {
+      // const userRepository = getRepository(User);
+      const user = await getRepository(User).findOne({
+        provider: "local",
+        email: email.toLocaleLowerCase()
+      });
 
       // User not found.
       if (!user) {
         console.log("[-] LocalStrategy : no user found.");
-        return done(undefined, false, { message: `Email ${email} not found.` });
+        return done(undefined, false, {
+          message: `Email ${email} not found.`
+        });
       }
 
-      user.comparePassword(password, (err: Error, isMatch: boolean) => {
+      console.log("TCL: user", user);
+      comparePassword(user, password, (err: any, isMatch: boolean) => {
         // Error during comapring password.
         if (err) {
           console.log("[-] LocalStrategy : Error occurred during comparing user password.", err);
@@ -63,7 +67,43 @@ passport.use(
         console.log("[-] LocalStrategy : password is not matched.");
         return done(undefined, false, { message: "Invalid email or password." });
       });
-    });
+
+      // * MongoDB
+    } else {
+      const user = UserMongo.findOne({ provider: "local", email: email.toLocaleLowerCase() });
+      // console.log("TCL: LocalStrategy --> user", user);
+
+      UserMongo.findOne({ provider: "local", email: email.toLowerCase() }, (err, user: any) => {
+        if (err) {
+          console.log("[-] LocalStrategy : DB Error occurred during finding user. ", err);
+          return done(err);
+        }
+
+        // User not found.
+        if (!user) {
+          console.log("[-] LocalStrategy : no user found.");
+          return done(undefined, false, { message: `Email ${email} not found.` });
+        }
+
+        user.comparePassword(password, (err: Error, isMatch: boolean) => {
+          // Error during comapring password.
+          if (err) {
+            console.log("[-] LocalStrategy : Error occurred during comparing user password.", err);
+            return done(err);
+          }
+
+          // OK. Pasword matched.
+          if (isMatch) {
+            console.log("[+] LocalStrategy : password matched.");
+            return done(undefined, user);
+          }
+
+          // NOK. Password not matched.
+          console.log("[-] LocalStrategy : password is not matched.");
+          return done(undefined, false, { message: "Invalid email or password." });
+        });
+      });
+    }
   })
 );
 
@@ -97,7 +137,7 @@ passport.use(
     (req: any, accessToken, refreshToken, profile, done) => {
       // Session exists.
       if (req.user) {
-        User.findOne({ facebook: profile.id }, (err, existingUser) => {
+        UserMongo.findOne({ facebook: profile.id }, (err, existingUser) => {
           if (err) {
             return done(err);
           }
@@ -111,7 +151,7 @@ passport.use(
             // * : Changed to give JWT token for existingUser login.
             done(err, existingUser);
           } else {
-            User.findById(req.user.id, (err, user: any) => {
+            UserMongo.findById(req.user.id, (err, user: any) => {
               if (err) {
                 return done(err);
               }
@@ -134,7 +174,7 @@ passport.use(
         });
         // No session user
       } else {
-        User.findOne({ facebook: profile.id }, (err, existingUser) => {
+        UserMongo.findOne({ facebook: profile.id }, (err, existingUser) => {
           if (err) {
             return done(err);
           }
@@ -142,7 +182,7 @@ passport.use(
             // console.log("TCL: [*] existingUser", existingUser);
             return done(undefined, existingUser);
           }
-          User.findOne({ email: profile._json.email }, (err, existingEmailUser) => {
+          UserMongo.findOne({ email: profile._json.email }, (err, existingEmailUser) => {
             if (err) {
               return done(err);
             }
@@ -153,7 +193,7 @@ passport.use(
               });
               done(err);
             } else {
-              const user: any = new User();
+              const user: any = new UserMongo();
               user.provider = "facebook";
               user.providerId = profile.id;
               user.email = "";

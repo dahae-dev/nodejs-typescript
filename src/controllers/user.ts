@@ -7,11 +7,16 @@ import { Request, Response, NextFunction } from "express";
 import { IVerifyOptions } from "passport-local";
 import { WriteError } from "mongodb";
 import _ from "underscore";
+import { getRepository } from "typeorm";
 
-import { CLIENT_BASE_URL } from "../util/secrets";
-import { default as User, UserModel, AuthToken } from "../models/User";
+import { CLIENT_BASE_URL, DATABASE_TYPE } from "../util/secrets";
+import { default as UserMongo, UserModel, AuthToken } from "../models/User";
+import { User } from "../entity/User";
 import * as token from "../util/token";
 import "../config/passport";
+import { connection } from "../app";
+import calculateAndSavePasswordHash from "../util/password";
+
 const request = require("express-validator");
 
 /**
@@ -31,7 +36,7 @@ export let getSignup = (req: Request, res: Response) => {
  * POST /signup
  * Create a new local account.
  */
-export let postSignup = (req: Request, res: Response, next: NextFunction) => {
+export let postSignup = async (req: Request, res: Response, next: NextFunction) => {
   req.assert("email", "Email is not valid").isEmail();
   req.assert("password", "Password must be at least 4 characters long").len({ min: 4 });
   req.assert("confirmPassword", "Passwords do not match").equals(req.body.password);
@@ -45,50 +50,87 @@ export let postSignup = (req: Request, res: Response, next: NextFunction) => {
     return res.status(400).send("Password가 일치하지 않습니다.");
   }
 
-  // console.log("TCL: postSignup -> user", req.body);
-
+  console.log("TCL: postSignup -> user", req.body);
   const { name, email, password, phone } = req.body;
-  const user = new User({
-    name,
-    email,
-    password,
-    phone,
-    provider: "local",
-    providerId: ""
-  });
 
-  // User.findOne({ email: req.body.email }, (err, existingUser) => {
-  User.findOne({ provider: "local", email }, (err, existingUser) => {
-    // Error
-    if (err) return next(err);
+  // * TypeORM
+  if (DATABASE_TYPE === "TYPEORM") {
+    const userRepository = getRepository(User);
+    const existingUser = await userRepository.findOne({
+      provider: "local",
+      email
+    });
 
     // Found existing user
     if (existingUser) {
       req.flash("errors", { msg: "Account with that email address already exists." });
       return res.redirect(`${CLIENT_BASE_URL}/login`);
     }
-    // New User
-    user.save((err: WriteError) => {
+
+    const user = new User();
+    user.name = name;
+    user.email = email;
+    user.password = password;
+    user.phone = phone;
+    user.provider = "local";
+    user.providerId = "";
+
+    await userRepository.save(user);
+
+    req.logIn(user, err => {
       if (err) return next(err);
 
       req.logIn(user, err => {
         if (err) {
           return next(err);
         }
-        // res.redirect("/");
-
-        // console.log("TCL: postSignup -> user", user);
-
         const myToken = token.generateToken(user);
         res
           .header("x-auth-token", myToken)
           .header("access-control-expose-headers", "x-auth-token")
           .send(_.pick(user, "_id", "name", "email"));
-
-        // token.sendResponseWithTokenInHeader(res, user);
       });
     });
-  });
+
+    // * MongoDB
+  } else {
+    const userMongo = new UserMongo({
+      name,
+      email,
+      password,
+      phone,
+      provider: "local",
+      providerId: ""
+    });
+
+    // User.findOne({ email: req.body.email }, (err, existingUser) => {
+    UserMongo.findOne({ provider: "local", email }, (err, existingUser) => {
+      // Error
+      if (err) return next(err);
+
+      // Found existing user
+      if (existingUser) {
+        req.flash("errors", { msg: "Account with that email address already exists." });
+        return res.redirect(`${CLIENT_BASE_URL}/login`);
+      }
+      // New User
+      userMongo.save((err: WriteError) => {
+        if (err) return next(err);
+
+        req.logIn(userMongo, err => {
+          if (err) {
+            return next(err);
+          }
+
+          const myToken = token.generateToken(userMongo);
+          res
+            .header("x-auth-token", myToken)
+            .header("access-control-expose-headers", "x-auth-token")
+            .send(_.pick(userMongo, "_id", "name", "email"));
+        });
+      });
+    });
+  }
 };
 
 /**
@@ -187,7 +229,7 @@ export let postUpdateProfile = (req: Request, res: Response, next: NextFunction)
     return res.redirect("/account");
   }
 
-  User.findById(req.user.id, (err, user: any) => {
+  UserMongo.findById(req.user.id, (err, user: any) => {
     if (err) {
       return next(err);
     }
@@ -225,7 +267,7 @@ export let postUpdatePassword = (req: Request, res: Response, next: NextFunction
     return res.redirect("/account");
   }
 
-  User.findById(req.user.id, (err, user: UserModel) => {
+  UserMongo.findById(req.user.id, (err, user: UserModel) => {
     if (err) {
       return next(err);
     }
@@ -245,7 +287,7 @@ export let postUpdatePassword = (req: Request, res: Response, next: NextFunction
  * Delete user account.
  */
 export let postDeleteAccount = (req: Request, res: Response, next: NextFunction) => {
-  User.remove({ _id: req.user.id }, err => {
+  UserMongo.remove({ _id: req.user.id }, err => {
     if (err) {
       return next(err);
     }
@@ -261,7 +303,7 @@ export let postDeleteAccount = (req: Request, res: Response, next: NextFunction)
  */
 export let getOauthUnlink = (req: Request, res: Response, next: NextFunction) => {
   const provider = req.params.provider;
-  User.findById(req.user.id, (err, user: any) => {
+  UserMongo.findById(req.user.id, (err, user: any) => {
     if (err) {
       return next(err);
     }
@@ -285,7 +327,7 @@ export let getReset = (req: Request, res: Response, next: NextFunction) => {
   if (req.isAuthenticated()) {
     return res.redirect("/");
   }
-  User.findOne({ passwordResetToken: req.params.token })
+  UserMongo.findOne({ passwordResetToken: req.params.token })
     .where("passwordResetExpires")
     .gt(Date.now())
     .exec((err, user) => {
@@ -320,7 +362,7 @@ export let postReset = (req: Request, res: Response, next: NextFunction) => {
   async.waterfall(
     [
       function resetPassword(done: Function) {
-        User.findOne({ passwordResetToken: req.params.token })
+        UserMongo.findOne({ passwordResetToken: req.params.token })
           .where("passwordResetExpires")
           .gt(Date.now())
           .exec((err, user: any) => {
@@ -412,7 +454,7 @@ export let postForgot = (req: Request, res: Response, next: NextFunction) => {
         });
       },
       function setRandomToken(token: AuthToken, done: Function) {
-        User.findOne({ email: req.body.email }, (err, user: any) => {
+        UserMongo.findOne({ email: req.body.email }, (err, user: any) => {
           if (err) {
             return done(err);
           }

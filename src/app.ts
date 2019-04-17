@@ -16,19 +16,10 @@ import expressValidator from "express-validator";
 import bluebird from "bluebird";
 import cors from "cors";
 import "reflect-metadata";
-import { createConnection } from "typeorm";
-import { Photo } from "./entity/Photo";
 
+import { Connection, createConnection } from "typeorm";
 import * as token from "./util/token";
 import { CLIENT_BASE_URL, MONGODB_URI, SESSION_SECRET } from "./util/secrets";
-
-createConnection()
-  .then(connection => {
-    console.log(`[+] TypeORM connection done.`);
-  })
-  .catch(error => console.log(`[-] TypeORM Error : ${error}`));
-// MongoDB
-const MongoStore = mongo(session);
 
 // Load environment variables from .env file, where API keys and passwords are configured
 // dotenv.config({ path: ".env.example" });
@@ -46,6 +37,12 @@ import * as passportConfig from "./config/passport";
 
 // Create Express server
 const app = express();
+
+// * TypeORM connection
+export const connection = createConnection();
+
+// MongoDB
+const MongoStore = mongo(session);
 
 // Connect to MongoDB
 const mongoUrl = MONGODB_URI;
