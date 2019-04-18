@@ -20,7 +20,6 @@ import "reflect-metadata";
 import { Connection, createConnection, getRepository } from "typeorm";
 import * as token from "./util/token";
 import { CLIENT_BASE_URL, MONGODB_URI, SESSION_SECRET } from "./util/secrets";
-import Payment from "./entity/Payment";
 
 // Load environment variables from .env file, where API keys and passwords are configured
 // dotenv.config({ path: ".env.example" });
