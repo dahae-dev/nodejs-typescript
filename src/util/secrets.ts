@@ -72,3 +72,10 @@ if (!DATABASE_TYPE) {
   logger.error("No DATABASE configuration. Set DATABASE_TYPE environment variable.");
   process.exit(1);
 }
+
+export const IMP_KEY = process.env.IMP_KEY;
+export const IMP_SECRET = process.env.IMP_SECRET;
+if (!IMP_KEY || !IMP_SECRET) {
+  logger.error("No IAMPORT ID/SECRET string. Set IMP_KEY or IMP_SECRET environment variable.");
+  process.exit(1);
+}
