@@ -17,9 +17,10 @@ import bluebird from "bluebird";
 import cors from "cors";
 import "reflect-metadata";
 
-import { Connection, createConnection } from "typeorm";
+import { Connection, createConnection, getRepository } from "typeorm";
 import * as token from "./util/token";
 import { CLIENT_BASE_URL, MONGODB_URI, SESSION_SECRET } from "./util/secrets";
+import Payment from "./entity/Payment";
 
 // Load environment variables from .env file, where API keys and passwords are configured
 // dotenv.config({ path: ".env.example" });
@@ -34,6 +35,7 @@ import * as couponController from "./controllers/coupon";
 import * as paymentController from "./controllers/payment";
 
 import * as passportConfig from "./config/passport";
+import { connect } from "tls";
 
 // Create Express server
 const app = express();
