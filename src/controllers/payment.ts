@@ -46,15 +46,8 @@ export let test = (req: Request, res: Response) => {
   }
 };
 
-interface IBody {
-  user_id: string;
-  study_id: string;
-  merchant_uid: string;
-  pay_method: string;
-  amount: number;
-}
 export const handlePayment = async (req: Request, res: Response) => {
-  const { user_id, study_id, merchant_uid, pay_method, amount } = req.body as IBody;
+  const { user_id, study_id, merchant_uid, pay_method, amount } = req.body;
   try {
     // TypeORM
     if (DATABASE_TYPE === "TYPEORM") {
@@ -74,11 +67,10 @@ export const handlePayment = async (req: Request, res: Response) => {
           imp_uid: ""
         })
         .execute();
-      // console.log("result: ", result);
+      // console.log("result: ", result); // TODO: insert result에 따라 handling
 
-      const success = result.raw.warningStatus === 1 ? true : false;
       res.json({
-        success,
+        success: true,
         merchant_uid
       });
     } else {
