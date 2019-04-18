@@ -16,6 +16,7 @@ export let test = (req: Request, res: Response) => {
   // TypeORM
   if (DATABASE_TYPE === "TYPEORM") {
     const payment = new Payment();
+    payment.user_id = "23";
     payment.status = "good";
     payment.mail_sent = true;
     payment.amount = 0;
