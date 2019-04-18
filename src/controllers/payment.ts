@@ -4,6 +4,7 @@ import axios from "axios";
 import { getRepository } from "typeorm";
 
 import { default as PaymentMongo } from "../models/Payment";
+import { User } from "../entity/User";
 import { Payment } from "../entity/Payment";
 import { getPaymentData } from "../util/iamport";
 import addCommaSeparator from "../util/addCommaSeparator";
@@ -12,11 +13,17 @@ import { DATABASE_TYPE } from "../util/secrets";
 
 const slackWebHookURL = "https://hooks.slack.com/services/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";
 
-export let test = (req: Request, res: Response) => {
+export let test = async (req: Request, res: Response) => {
   // TypeORM
   if (DATABASE_TYPE === "TYPEORM") {
+    const userRepository = getRepository(User);
+    const user = await userRepository.findOne({
+      provider: "local",
+      email: "tkhwang@gmail.com"
+    });
+
     const payment = new Payment();
-    payment.user_id = "23";
+    payment.userId = user;
     payment.status = "good";
     payment.mail_sent = true;
     payment.amount = 0;

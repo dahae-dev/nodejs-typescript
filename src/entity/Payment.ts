@@ -8,7 +8,7 @@ export class Payment {
 
   @OneToOne(type => User)
   @JoinColumn()
-  user_id: string;
+  userId: User;
 
   @Column()
   study_id: string;
