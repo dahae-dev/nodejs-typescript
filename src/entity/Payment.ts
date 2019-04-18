@@ -1,11 +1,13 @@
-import { Entity, PrimaryGeneratedColumn, Column, BeforeUpdate, BeforeInsert } from "typeorm";
+import { Entity, PrimaryGeneratedColumn, Column, BeforeUpdate, BeforeInsert, OneToOne, JoinColumn } from "typeorm";
+import { User } from "../entity/User";
 
 @Entity()
 export class Payment {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column()
+  @OneToOne(type => User)
+  @JoinColumn()
   user_id: string;
 
   @Column()

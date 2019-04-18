@@ -1,9 +1,10 @@
 import * as jToken from "jsonwebtoken";
 import _ from "underscore";
-
 import { Response } from "express";
 
 import { UserModel } from "../models/User";
+import { DATABASE_TYPE } from "../util/secrets";
+
 export interface IUser {
   _id: string;
   email: string;
@@ -12,7 +13,7 @@ export interface IUser {
 export const generateToken = (user: any): string => {
   // console.log("TCL: user", user);
   const claims = {
-    id: user._id,
+    id: user.id || user._id,
     name: user.name,
     email: user.email,
     phone: user.phone
@@ -26,5 +27,5 @@ export const sendResponseWithTokenInHeader = (res: Response, user: any) => {
   return res
     .header("x-auth-token", myToken)
     .header("access-control-expose-headers", "x-auth-token")
-    .send(_.pick(user, "_id", "name", "email", "phone"));
+    .send(_.pick(user, "id", "_id", "name", "email", "phone"));
 };
