@@ -55,16 +55,20 @@ export let test = async (req: Request, res: Response) => {
 
 export const handlePayment = async (req: Request, res: Response) => {
   const { user_id, study_id, merchant_uid, pay_method, amount } = req.body;
+
   try {
     // TypeORM
     if (DATABASE_TYPE === "TYPEORM") {
+      const user = await getRepository(User).findOne({ id: user_id });
+      // console.log("user: ", user);
+
       const paymentNotVerfied = getRepository(Payment);
       const result = await paymentNotVerfied
         .createQueryBuilder()
         .insert()
         .into(Payment)
         .values({
-          user_id,
+          userId: user,
           study_id,
           merchant_uid,
           status: "unpaid",
@@ -114,7 +118,6 @@ export const handlePayment = async (req: Request, res: Response) => {
 export const handleNotification = async (req: Request, res: Response) => {
   console.log("***** req.body: ", req.body);
   const { imp_uid } = req.body;
-  console.log("***** imp_uid: ", imp_uid);
 
   try {
     const impPayment = await getPaymentData(imp_uid);
