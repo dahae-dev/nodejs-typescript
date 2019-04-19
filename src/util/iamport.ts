@@ -1,7 +1,4 @@
-// TODO: WHY NOT WORKING?
-// import { IMP_KEY, IMP_SECRET } from "../util/secrets";
-const IMP_KEY = "0794151887787607";
-const IMP_SECRET = "sOaZXYF3GFtPfAJ6nvW9a0S1mRkyx0PZO0ZMZFQFkjvAUeGhKCqUDjVZagyIhoI6oHTnnJ3I2yiWNZex";
+import { IMP_KEY, IMP_SECRET } from "../util/secrets";
 const IMP_URL = "https://api.iamport.kr";
 import axios from "axios";
 
@@ -9,8 +6,8 @@ export const getAccessToken = async () => {
   // console.log("IMP_KEY: ", IMP_KEY);
   // console.log("IMP_SECRET: ", IMP_SECRET);
   const getToken = await axios.post(`${IMP_URL}/users/getToken`, {
-    IMP_KEY,
-    IMP_SECRET
+    imp_key: IMP_KEY,
+    imp_secret: IMP_SECRET
   });
   const accessToken = getToken.data.response.access_token;
   return {
