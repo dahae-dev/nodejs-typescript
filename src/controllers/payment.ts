@@ -63,21 +63,16 @@ export const handlePayment = async (req: Request, res: Response) => {
       // console.log("user: ", user);
 
       const paymentNotVerfied = getRepository(Payment);
-      const result = await paymentNotVerfied
-        .createQueryBuilder()
-        .insert()
-        .into(Payment)
-        .values({
-          userId: user,
-          study_id,
-          merchant_uid,
-          status: "unpaid",
-          mail_sent: false,
-          amount,
-          pay_method,
-          imp_uid: ""
-        })
-        .execute();
+      const result = await paymentNotVerfied.insert({
+        userId: user,
+        study_id,
+        merchant_uid,
+        status: "unpaid",
+        mail_sent: false,
+        amount,
+        pay_method,
+        imp_uid: ""
+      });
       // console.log("result: ", result); // TODO: insert result에 따라 handling
 
       res.json({
@@ -147,18 +142,14 @@ export const handleNotification = async (req: Request, res: Response) => {
 
     // TypeORM
     if (DATABASE_TYPE === "TYPEORM") {
-      const payment = await getRepository(Payment)
-        .createQueryBuilder("payment")
-        .where("payment.merchant_uid = :merchant_uid", { merchant_uid })
-        .getOne();
+      const payment = await getRepository(Payment).findOne({ merchant_uid });
       console.log("payment: ", payment);
       const amountToBePaid = payment.amount;
 
       if (amount === amountToBePaid) {
-        const updatedPayment = await getRepository(Payment)
-          .createQueryBuilder()
-          .update(Payment)
-          .set({
+        const updatedPayment = await getRepository(Payment).update(
+          { merchant_uid },
+          {
             amount,
             status,
             cancel_amount,
@@ -171,9 +162,8 @@ export const handleNotification = async (req: Request, res: Response) => {
             vbank_date,
             vbank_num,
             channel
-          })
-          .where("merchant_uid = :merchant_uid", { merchant_uid })
-          .execute();
+          }
+        );
         console.log("***** updatedPayment: ", updatedPayment);
 
         const amountWithCommaSeparator = addCommaSeparator(amount);
@@ -198,14 +188,12 @@ export const handleNotification = async (req: Request, res: Response) => {
             sendEmailResult = await sendEmail(status, recipient, localVar);
             console.log("***** sendEmailResult @ready: ", sendEmailResult); // undefined
             // TODO: must wrap below update sent_mail flag only if sendEmailResult is successfull
-            updateSentMailPayment = await getRepository(Payment)
-              .createQueryBuilder()
-              .update(Payment)
-              .set({
+            updateSentMailPayment = await getRepository(Payment).update(
+              { merchant_uid },
+              {
                 mail_sent: true
-              })
-              .where("merchant_uid = :merchant_uid", { merchant_uid })
-              .execute();
+              }
+            );
             console.log("***** updatedSentMailPayment @ready", updateSentMailPayment);
 
             res.send({
@@ -218,14 +206,12 @@ export const handleNotification = async (req: Request, res: Response) => {
             sendEmailResult = await sendEmail(status, recipient, localVar);
             console.log("***** sendEmailResult @paid: ", sendEmailResult); // undefined
             // TODO: must wrap below update sent_mail flag only if sendEmailResult is successfull
-            updateSentMailPayment = await getRepository(Payment)
-              .createQueryBuilder()
-              .update(Payment)
-              .set({
+            updateSentMailPayment = await getRepository(Payment).update(
+              { merchant_uid },
+              {
                 mail_sent: true
-              })
-              .where("merchant_uid = :merchant_uid", { merchant_uid })
-              .execute();
+              }
+            );
             console.log("***** updatedSentMailPayment @paid", updateSentMailPayment);
 
             await axios.post(slackWebHookURL, {
