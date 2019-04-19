@@ -101,11 +101,9 @@ export const handlePayment = async (req: Request, res: Response) => {
       });
     }
   } catch (err) {
-    console.log("***** err ****** : ", err);
-    // TODO: proper error handling
     res.json({
       success: false,
-      error: err
+      error: err.message
     });
   }
 };
@@ -349,6 +347,6 @@ export const handleNotification = async (req: Request, res: Response) => {
   } catch (err) {
     // TODO: proper error handling
     console.log(err);
-    res.send(err);
+    res.send({ error: err.message });
   }
 };
