@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, BeforeUpdate, BeforeInsert, OneToOne, JoinColumn } from "typeorm";
+import { Entity, PrimaryGeneratedColumn, Column, BeforeUpdate, BeforeInsert, ManyToOne, JoinColumn } from "typeorm";
 import { User } from "../entity/User";
 
 @Entity()
@@ -6,7 +6,7 @@ export class Payment {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @OneToOne(type => User)
+  @ManyToOne(type => User)
   @JoinColumn()
   userId: User;
 
