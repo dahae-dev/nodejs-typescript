@@ -32,6 +32,7 @@ import * as contactController from "./controllers/contact";
 import * as authController from "./controllers/auth";
 import * as couponController from "./controllers/coupon";
 import * as paymentController from "./controllers/payment";
+import * as mypageController from "./controllers/mypage";
 
 import * as passportConfig from "./config/passport";
 import { connect } from "tls";
@@ -172,5 +173,11 @@ app.get("/coupon", couponController.check);
 app.get("/payment", paymentController.test);
 app.post("/payment", paymentController.handlePayment);
 app.post("/payment/notification", paymentController.handleNotification);
+
+/**
+ * payment
+ */
+app.get("/mypage", mypageController.test);
+app.get("/mypage/courses", mypageController.getCourses);
 
 export default app;
