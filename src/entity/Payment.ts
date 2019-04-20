@@ -6,9 +6,9 @@ export class Payment {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @ManyToOne(type => User)
+  @ManyToOne(type => User, user => user.payment)
   @JoinColumn()
-  userId: User;
+  user: User;
 
   @Column()
   study_id: string;

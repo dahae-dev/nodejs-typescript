@@ -1,6 +1,7 @@
-import { Entity, PrimaryGeneratedColumn, Column, BeforeUpdate, BeforeInsert } from "typeorm";
+import { Entity, PrimaryGeneratedColumn, Column, BeforeUpdate, BeforeInsert, OneToMany } from "typeorm";
 import bcrypt from "bcrypt-nodejs";
 import crypto from "crypto";
+import { Payment } from "../entity/Payment";
 
 @Entity()
 export class User {
@@ -33,6 +34,9 @@ export class User {
 
   @Column({ default: false })
   isAdmin: boolean;
+
+  @OneToMany(type => Payment, payment => payment.user)
+  payment: Payment[];
 
   @BeforeInsert()
   updatePasswordHash() {
