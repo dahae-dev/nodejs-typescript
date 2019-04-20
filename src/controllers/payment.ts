@@ -23,7 +23,7 @@ export let test = async (req: Request, res: Response) => {
     });
 
     const payment = new Payment();
-    payment.userId = user;
+    payment.user = user;
     payment.status = "good";
     payment.mail_sent = true;
     payment.amount = 0;
@@ -64,7 +64,7 @@ export const handlePayment = async (req: Request, res: Response) => {
 
       const paymentNotVerfied = getRepository(Payment);
       const result = await paymentNotVerfied.insert({
-        userId: user,
+        user,
         study_id,
         merchant_uid,
         status: "unpaid",
