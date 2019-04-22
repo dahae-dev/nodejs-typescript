@@ -171,6 +171,21 @@ app.get("/auth/naver/callback", passport.authenticate("naver", { failureRedirect
   res.redirect("/auth/additionalInfo");
 });
 
+app.get(
+  "/auth/google",
+  passport.authenticate("google", {
+    scope: [
+      "profile",
+      "email",
+      "https://www.googleapis.com/auth/userinfo.profile",
+      "https://www.googleapis.com/auth/userinfo.email"
+    ]
+  })
+);
+app.get("/auth/google/callback", passport.authenticate("google", { failureRedirect: "/login" }), function(req, res) {
+  res.redirect("/auth/additionalInfo");
+});
+
 app.get("/auth/additionalInfo", authController.getAdditionalInfo);
 app.post("/auth/additionalInfo", authController.postAdditionalInfo);
 

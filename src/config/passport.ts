@@ -3,11 +3,15 @@ import passport from "passport";
 import passportLocal from "passport-local";
 import passportFacebook from "passport-facebook";
 import passportNaver from "passport-naver";
+import passportGoogle from "passport-google-oauth2";
 import { getRepository } from "typeorm";
 import _ from "underscore";
 
 import {
   CLIENT_BASE_URL,
+  GOOGLE_CLIENT_ID,
+  GOOGLE_CLIENT_SECRET,
+  GOOGLE_CALLBACK_URL,
   FACEBOOK_CLIENT_ID,
   FACEBOOK_CLIENT_SECRET,
   FACEBOOK_CALLBACK_URL,
@@ -29,6 +33,7 @@ const LocalStrategy = passportLocal.Strategy;
 const FacebookStrategy = passportFacebook.Strategy;
 const KakaoStrategy = require("passport-kakao").Strategy;
 const NaverStrategy = passportNaver.Strategy;
+const GoogleStrategy = passportGoogle.Strategy;
 
 passport.serializeUser<any, any>((user, done) => {
   done(undefined, user.id);
@@ -148,6 +153,46 @@ passport.use(
 /**
  * Sign in with Facebook.
  */
+
+passport.use(
+  new GoogleStrategy(
+    {
+      clientID: GOOGLE_CLIENT_ID,
+      clientSecret: GOOGLE_CLIENT_SECRET,
+      callbackURL: "http://yourdormain:3000/auth/google/callback",
+      passReqToCallback: true
+    },
+    async (request, accessToken, refreshToken, profile, done) => {
+      try {
+        const userRepository = getRepository(User);
+        const existingUser = await userRepository.findOne({
+          provider: "google",
+          providerId: profile.id
+        });
+
+        // Existing user
+        if (existingUser) {
+          // console.log("TCL: [+] FacebookStrategy : existingUser = ", existingUser);
+          return done(undefined, existingUser);
+        }
+
+        const user = new User();
+        user.provider = "google";
+        user.providerId = profile.id;
+        await userRepository.save(user);
+
+        // console.log("TCL: [+] FacebookStrategy : user = ", user);
+        done(undefined, user);
+
+        //
+      } catch (error) {
+        console.error(error);
+        done(error);
+      }
+    }
+  )
+);
+
 passport.use(
   new FacebookStrategy(
     {
