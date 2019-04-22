@@ -208,5 +208,6 @@ app.post("/payment/notification", paymentController.handleNotification);
  */
 app.get("/mypage", mypageController.test);
 app.get("/mypage/courses", mypageController.getCourses);
+app.get("/mypage/members", mypageController.getMembers);
 
 export default app;
