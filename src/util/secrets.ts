@@ -49,6 +49,17 @@ if (!MONGODB_URI) {
   process.exit(1);
 }
 
+export const GOOGLE_CLIENT_ID = process.env["GOOGLE_CLIENT_ID"];
+export const GOOGLE_CLIENT_SECRET = process.env["GOOGLE_CLIENT_SECRET"];
+export const GOOGLE_CALLBACK_URL = process.env["GOOGLE_CALLBACK_URL"];
+
+if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET || !GOOGLE_CALLBACK_URL) {
+  logger.error(
+    "No Google Client ID/Secret string. Set GOOGLE_CLIENT_ID/GOOGLE_CLIENT_SECRET/GOOGLE_CALLBACK_URL environment variable."
+  );
+  process.exit(1);
+}
+
 export const FACEBOOK_CLIENT_ID = process.env["FACEBOOK_CLIENT_ID"];
 export const FACEBOOK_CLIENT_SECRET = process.env["FACEBOOK_CLIENT_SECRET"];
 export const FACEBOOK_CALLBACK_URL = process.env["FACEBOOK_CALLBACK_URL"];
