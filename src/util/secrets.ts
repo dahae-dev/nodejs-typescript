@@ -49,20 +49,30 @@ if (!MONGODB_URI) {
   process.exit(1);
 }
 
-export const FACEBOOK_ID = process.env["FACEBOOK_ID"];
-export const FACEBOOK_SECRET = process.env["FACEBOOK_SECRET"];
+export const FACEBOOK_CLIENT_ID = process.env["FACEBOOK_CLIENT_ID"];
+export const FACEBOOK_CLIENT_SECRET = process.env["FACEBOOK_CLIENT_SECRET"];
 export const FACEBOOK_CALLBACK_URL = process.env["FACEBOOK_CALLBACK_URL"];
 
-if (!FACEBOOK_ID || !FACEBOOK_SECRET || !FACEBOOK_CALLBACK_URL) {
+if (!FACEBOOK_CLIENT_ID || !FACEBOOK_CLIENT_SECRET || !FACEBOOK_CALLBACK_URL) {
   logger.error(
     "No Facebook Client ID/Secret string. Set FACEBOOK_ID/FACEBOOK_SECRET/FACEBOOK_CALLBACK_URL environment variable."
   );
   process.exit(1);
 }
 
-export const KAKAO_ID = process.env["KAKAO_ID"];
-if (!KAKAO_ID) {
-  logger.error("No KAKAO Client ID string. Set KAKAO_ID environment variable.");
+export const KAKAO_CLIENT_ID = process.env["KAKAO_CLIENT_ID"];
+export const KAKAO_CALLBACK_URL = process.env["KAKAO_CALLBACK_URL"];
+if (!KAKAO_CLIENT_ID || !KAKAO_CALLBACK_URL) {
+  logger.error("No KAKAO Client ID string. Set KAKAO_CLIENT_ID environment variable.");
+  process.exit(1);
+}
+
+export const NAVER_CLIENT_ID = process.env["NAVER_CLIENT_ID"];
+export const NAVER_CLIENT_SECRET = process.env["NAVER_CLIENT_SECRET"];
+export const NAVER_CALLBACK_URL = process.env["NAVER_CALLBACK_URL"];
+
+if (!NAVER_CLIENT_ID || !NAVER_CLIENT_SECRET || !NAVER_CALLBACK_URL) {
+  logger.error("No Naver Client ID/Secret string. Set NAVER_ID/NAVER_SECRET/NAVER_CALLBACK_URL environment variable.");
   process.exit(1);
 }
 

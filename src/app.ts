@@ -156,7 +156,6 @@ app.get("/auth/facebook/callback", passport.authenticate("facebook", { failureRe
 });
 
 app.get("/auth/kakao", passport.authenticate("kakao"));
-
 app.get(
   "/auth/kakao/callback",
   passport.authenticate("kakao", {
@@ -166,6 +165,11 @@ app.get(
     res.redirect("/auth/additionalInfo");
   }
 );
+
+app.get("/auth/naver", passport.authenticate("naver"));
+app.get("/auth/naver/callback", passport.authenticate("naver", { failureRedirect: "/login" }), function(req, res) {
+  res.redirect("/auth/additionalInfo");
+});
 
 app.get("/auth/additionalInfo", authController.getAdditionalInfo);
 app.post("/auth/additionalInfo", authController.postAdditionalInfo);
