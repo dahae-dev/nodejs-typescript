@@ -5,7 +5,14 @@ import passportFacebook from "passport-facebook";
 import { getRepository } from "typeorm";
 import _ from "underscore";
 
-import { CLIENT_BASE_URL, FACEBOOK_ID, FACEBOOK_SECRET, FACEBOOK_CALLBACK_URL, DATABASE_TYPE } from "../util/secrets";
+import {
+  CLIENT_BASE_URL,
+  FACEBOOK_ID,
+  FACEBOOK_SECRET,
+  FACEBOOK_CALLBACK_URL,
+  DATABASE_TYPE,
+  KAKAO_ID
+} from "../util/secrets";
 import { sendResponseWithTokenInHeader } from "../util/token";
 import comparePassword from "../util/password";
 
@@ -15,6 +22,7 @@ import { User } from "../entity/User";
 
 const LocalStrategy = passportLocal.Strategy;
 const FacebookStrategy = passportFacebook.Strategy;
+const KakaoStrategy = require("passport-kakao").Strategy;
 
 passport.serializeUser<any, any>((user, done) => {
   done(undefined, user.id);
@@ -246,6 +254,47 @@ passport.use(
             });
           });
         }
+      }
+    }
+  )
+);
+
+passport.use(
+  new KakaoStrategy(
+    {
+      clientID: KAKAO_ID,
+      callbackURL: "/auth/kakao/callback"
+    },
+    async (accessToken: string, refereshToken: string, profile: any, done: any) => {
+      // console.log('[*] /auth/kakao/callback : token - ', accessToken, refereshToken);
+      console.log("[*] /auth/kakao/callback : profile -", profile);
+
+      try {
+        const userRepository = getRepository(User);
+        const existingUser = await userRepository.findOne({
+          provider: "kakao",
+          providerId: profile.id
+        });
+
+        // Existing user
+        if (existingUser) {
+          // console.log("TCL: [+] FacebookStrategy : existingUser = ", existingUser);
+          return done(undefined, existingUser);
+        }
+
+        // New User via Facebook
+        const user = new User();
+        user.provider = "kakao";
+        user.providerId = profile.id;
+        await userRepository.save(user);
+
+        // console.log("TCL: [+] FacebookStrategy : user = ", user);
+        done(undefined, user);
+
+        //
+      } catch (error) {
+        console.error(error);
+        done(error);
       }
     }
   )

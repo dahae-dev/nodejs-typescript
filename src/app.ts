@@ -152,10 +152,20 @@ app.get("/account/unlink/:provider", passportConfig.isAuthenticated, userControl
  */
 app.get("/auth/facebook", passport.authenticate("facebook", { scope: ["email", "public_profile"] }));
 app.get("/auth/facebook/callback", passport.authenticate("facebook", { failureRedirect: "/login" }), (req, res) => {
-  // console.log("TCL: [*] /auth/facebook/callback : req.user = ", req.user);
-
   res.redirect("/auth/additionalInfo");
 });
+
+app.get("/auth/kakao", passport.authenticate("kakao"));
+
+app.get(
+  "/auth/kakao/callback",
+  passport.authenticate("kakao", {
+    failureRedirect: "/"
+  }),
+  (req, res) => {
+    res.redirect("/auth/additionalInfo");
+  }
+);
 
 app.get("/auth/additionalInfo", authController.getAdditionalInfo);
 app.post("/auth/additionalInfo", authController.postAdditionalInfo);

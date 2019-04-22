@@ -55,10 +55,17 @@ export const FACEBOOK_CALLBACK_URL = process.env["FACEBOOK_CALLBACK_URL"];
 
 if (!FACEBOOK_ID || !FACEBOOK_SECRET || !FACEBOOK_CALLBACK_URL) {
   logger.error(
-    "No mongo connection string. Set FACEBOOK_ID/FACEBOOK_SECRET/FACEBOOK_CALLBACK_URL environment variable."
+    "No Facebook Client ID/Secret string. Set FACEBOOK_ID/FACEBOOK_SECRET/FACEBOOK_CALLBACK_URL environment variable."
   );
   process.exit(1);
 }
+
+export const KAKAO_ID = process.env["KAKAO_ID"];
+if (!KAKAO_ID) {
+  logger.error("No KAKAO Client ID string. Set KAKAO_ID environment variable.");
+  process.exit(1);
+}
+
 export const SENDGRID_USER = process.env["SENDGRID_USER"];
 export const SENDGRID_PASSWORD = process.env["SENDGRID_PASSWORD"];
 
