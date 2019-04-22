@@ -159,7 +159,7 @@ passport.use(
     {
       clientID: GOOGLE_CLIENT_ID,
       clientSecret: GOOGLE_CLIENT_SECRET,
-      callbackURL: "http://yourdormain:3000/auth/google/callback",
+      callbackURL: GOOGLE_CALLBACK_URL,
       passReqToCallback: true
     },
     async (request, accessToken, refreshToken, profile, done) => {
