@@ -12,27 +12,32 @@ export const test = async (req: Request, res: Response) => {
 };
 
 export const getCourses = async (req: Request, res: Response) => {
-  const token = req.headers["x-auth-token"] as string;
-  const decoded = jwtDecode(token) as { id: number };
-  const id = decoded.id;
-  // console.log("id: ", id);
-  const user = await getRepository(User).findOne({ id });
+  try {
+    const token = req.headers["x-auth-token"] as string;
+    const decoded = jwtDecode(token) as { id: number };
+    const id = decoded.id;
+    // console.log("id: ", id);
+    const user = await getRepository(User).findOne({ id });
 
-  const paymentQb = await getRepository(Payment).createQueryBuilder("payment");
+    const paymentQb = await getRepository(Payment).createQueryBuilder("payment");
 
-  const result = await paymentQb
-    .select("payment.study_id")
-    .where("payment.userId = :userId", { userId: id }) // TODO: userId 가능한지 다시 확인! user 넣을 경우 syntax 에러
-    .andWhere("payment.status = :status", { status: "paid" })
-    .orderBy("payment.paid_at", "ASC")
-    .getMany();
-  // console.log("result: ", result);
+    const result = await paymentQb
+      .select("payment.study_id")
+      .where("payment.userId = :userId", { userId: id }) // TODO: userId 가능한지 다시 확인! user 넣을 경우 syntax 에러
+      .andWhere("payment.status = :status", { status: "paid" })
+      .orderBy("payment.paid_at", "ASC")
+      .getMany();
+    // console.log("result: ", result);
 
-  const courses = !!result.length ? result : [];
+    const courses = !!result.length ? result : [];
 
-  res.send({
-    courses
-  });
+    res.send({
+      courses
+    });
+  } catch (err) {
+    console.log(err);
+    res.send({ error: err.message });
+  }
 };
 
 export const getMembers = async (req: Request, res: Response) => {
@@ -52,5 +57,6 @@ export const getMembers = async (req: Request, res: Response) => {
     });
   } catch (err) {
     console.log(err);
+    res.send({ error: err.message });
   }
 };
