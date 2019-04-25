@@ -569,7 +569,7 @@ export let postReset = (req: Request, res: Response, next: NextFunction) => {
       if (err) {
         return next(err);
       }
-      res.redirect(`${CLIENT_BASE_URL}/`);
+      res.send("Ok");
     }
   );
 };
