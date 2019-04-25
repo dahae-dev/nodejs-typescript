@@ -50,7 +50,7 @@ export let postSignup = async (req: Request, res: Response, next: NextFunction) 
     return res.status(400).send("Password가 일치하지 않습니다.");
   }
 
-  console.log("TCL: postSignup -> user", req.body);
+  // console.log("TCL: postSignup -> user", req.body);
   const { name, email, password, phone } = req.body;
 
   // * TypeORM
@@ -320,28 +320,153 @@ export let getOauthUnlink = (req: Request, res: Response, next: NextFunction) =>
 };
 
 /**
- * GET /reset/:token
- * Reset Password page.
+ * GET /forgot
+ * Forgot Password page.
  */
-export let getReset = (req: Request, res: Response, next: NextFunction) => {
-  if (req.isAuthenticated()) {
-    return res.redirect("/");
+// export let getForgot = (req: Request, res: Response) => {
+//   if (req.isAuthenticated()) {
+//     return res.redirect("/");
+//   }
+//   res.render("account/forgot", {
+//     title: "Forgot Password"
+//   });
+// };
+
+/**
+ * POST /forgot
+ * Create a random token, then the send user an email with a reset link.
+ */
+export let postForgot = (req: Request, res: Response, next: NextFunction) => {
+  req.assert("email", "Please enter a valid email address.").isEmail();
+  req.sanitize("email").normalizeEmail({ gmail_remove_dots: false });
+
+  const errors = req.validationErrors();
+
+  if (errors) {
+    req.flash("errors", errors);
+    return res.redirect(`${CLIENT_BASE_URL}/forgot`);
   }
-  UserMongo.findOne({ passwordResetToken: req.params.token })
-    .where("passwordResetExpires")
-    .gt(Date.now())
-    .exec((err, user) => {
+
+  const { email } = req.body;
+
+  async.waterfall(
+    [
+      function createRandomToken(done: Function) {
+        crypto.randomBytes(16, (err, buf) => {
+          const token = buf.toString("hex");
+          done(err, token);
+        });
+      },
+      async function setRandomToken(token: string, done: Function) {
+        if (DATABASE_TYPE === "TYPEORM") {
+          try {
+            const userRepository = getRepository(User);
+            const user = await userRepository.findOne({ email, provider: "local" });
+
+            if (!user) {
+              req.flash("errors", { msg: "Account with that email address does not exist." });
+              return res.redirect("/forgot");
+            }
+            user.passwordResetToken = token;
+            user.passwordResetExpires = Date.now() + 3600000; // 1 hour
+
+            await userRepository.save(user);
+            done(undefined, token, user);
+          } catch (err) {
+            done(err);
+          }
+        } else {
+          UserMongo.findOne({ email: req.body.email }, (err, user: any) => {
+            if (err) {
+              return done(err);
+            }
+            if (!user) {
+              req.flash("errors", { msg: "Account with that email address does not exist." });
+              return res.redirect("/forgot");
+            }
+            user.passwordResetToken = token;
+            user.passwordResetExpires = Date.now() + 3600000; // 1 hour
+            user.save((err: WriteError) => {
+              done(err, token, user);
+            });
+          });
+        }
+      },
+      function sendForgotPasswordEmail(token: string, user: UserModel, done: Function) {
+        const transporter = nodemailer.createTransport({
+          service: "SendGrid",
+          auth: {
+            user: process.env.SENDGRID_USER,
+            pass: process.env.SENDGRID_PASSWORD
+          }
+        });
+        const mailOptions = {
+          to: user.email,
+          from: "noreply@studystates.net",
+          subject: "Reset your password on Studystates.net",
+          text: `You are receiving this email because you (or someone else) have requested the reset of the password for your account.\n\n
+          Please click on the following link, or paste this into your browser to complete the process:\n\n
+          ${CLIENT_BASE_URL}/reset?start=auth&token=${token}&end=end\n\n
+          If you did not request this, please ignore this email and your password will remain unchanged.\n`
+        };
+        // http://${req.headers.host}/reset?token=${token}\n\n
+        transporter.sendMail(mailOptions, err => {
+          req.flash("info", { msg: `An e-mail has been sent to ${user.email} with further instructions.` });
+          done(err);
+        });
+      }
+    ],
+    err => {
       if (err) {
         return next(err);
       }
-      if (!user) {
-        req.flash("errors", { msg: "Password reset token is invalid or has expired." });
-        return res.redirect("/forgot");
-      }
-      res.render("account/reset", {
-        title: "Password Reset"
-      });
+      // res.redirect("/forgot");
+      res.send("Ok");
+    }
+  );
+};
+
+/**
+ * GET /reset/:token
+ * Reset Password page.
+ */
+export let getReset = async (req: Request, res: Response, next: NextFunction) => {
+  if (req.isAuthenticated()) {
+    return res.redirect("/");
+  }
+  if (DATABASE_TYPE === "TYPEORM") {
+    const userRepository = getRepository(User);
+    const user = await userRepository.findOne({
+      passwordResetToken: req.params.token
     });
+
+    if (!user) {
+      req.flash("errors", { msg: "Password reset token is invalid or has expired." });
+      return res.redirect(`${CLIENT_BASE_URL}/forgot`);
+    }
+
+    if (user.passwordResetExpires > Date.now()) {
+      return res.status(400).send("Password reset token 유효기간이 만료되었습니다.");
+    }
+    // Normal case : redirect to reset password in client.
+    return res.redirect(`${CLIENT_BASE_URL}/reset/${req.params.token}`);
+  } else {
+    UserMongo.findOne({ passwordResetToken: req.params.token })
+      .where("passwordResetExpires")
+      .gt(Date.now())
+      .exec((err, user) => {
+        if (err) {
+          return next(err);
+        }
+        if (!user) {
+          req.flash("errors", { msg: "Password reset token is invalid or has expired." });
+          return res.redirect("/forgot");
+        }
+        res.render("account/reset", {
+          title: "Password Reset"
+        });
+      });
+  }
 };
 
 /**
@@ -349,6 +474,7 @@ export let getReset = (req: Request, res: Response, next: NextFunction) => {
  * Process the reset password request.
  */
 export let postReset = (req: Request, res: Response, next: NextFunction) => {
+  req.assert("token", "Token must not be empty").notEmpty();
   req.assert("password", "Password must be at least 4 characters long.").len({ min: 4 });
   req.assert("confirm", "Passwords must match.").equals(req.body.password);
 
@@ -358,33 +484,64 @@ export let postReset = (req: Request, res: Response, next: NextFunction) => {
     req.flash("errors", errors);
     return res.redirect("back");
   }
+  const { token, password, confirm } = req.body;
 
   async.waterfall(
     [
-      function resetPassword(done: Function) {
-        UserMongo.findOne({ passwordResetToken: req.params.token })
-          .where("passwordResetExpires")
-          .gt(Date.now())
-          .exec((err, user: any) => {
-            if (err) {
-              return next(err);
-            }
-            if (!user) {
-              req.flash("errors", { msg: "Password reset token is invalid or has expired." });
-              return res.redirect("back");
-            }
-            user.password = req.body.password;
-            user.passwordResetToken = undefined;
-            user.passwordResetExpires = undefined;
-            user.save((err: WriteError) => {
+      async function resetPassword(done: Function) {
+        if (DATABASE_TYPE === "TYPEORM") {
+          const userRepository = getRepository(User);
+          const user = await userRepository.findOne({
+            passwordResetToken: token
+          });
+
+          if (!user) {
+            return res.status(400).send("Password reset token is invalid or has expired.");
+          }
+
+          if (user.passwordResetExpires > Date.now()) {
+            return res.status(400).send("Password reset token 유효기간이 만료되었습니다.");
+          }
+
+          // Normal : Change password
+          user.password = password;
+          user.passwordResetToken = undefined;
+          user.passwordResetExpires = undefined;
+
+          try {
+            await userRepository.save(user);
+            req.logIn(user, err => {
+              done(err, user);
+            });
+          } catch (err) {
+            return next(err);
+          }
+        } else {
+          UserMongo.findOne({ passwordResetToken: req.params.token })
+            .where("passwordResetExpires")
+            .gt(Date.now())
+            .exec((err, user: any) => {
               if (err) {
                 return next(err);
               }
-              req.logIn(user, err => {
-                done(err, user);
+              if (!user) {
+                req.flash("errors", { msg: "Password reset token is invalid or has expired." });
+                return res.redirect("back");
+              }
+              user.password = req.body.password;
+              user.passwordResetToken = undefined;
+              user.passwordResetExpires = undefined;
+
+              user.save((err: WriteError) => {
+                if (err) {
+                  return next(err);
+                }
+                req.logIn(user, err => {
+                  done(err, user);
+                });
               });
             });
-          });
+        }
       },
       function sendResetPasswordEmail(user: UserModel, done: Function) {
         const transporter = nodemailer.createTransport({
@@ -396,7 +553,7 @@ export let postReset = (req: Request, res: Response, next: NextFunction) => {
         });
         const mailOptions = {
           to: user.email,
-          from: "express-ts@starter.com",
+          from: "noreply@studystates.net",
           subject: "Your password has been changed",
           text: `Hello,\n\nThis is a confirmation that the password for your account ${
             user.email
@@ -412,91 +569,7 @@ export let postReset = (req: Request, res: Response, next: NextFunction) => {
       if (err) {
         return next(err);
       }
-      res.redirect("/");
-    }
-  );
-};
-
-/**
- * GET /forgot
- * Forgot Password page.
- */
-export let getForgot = (req: Request, res: Response) => {
-  if (req.isAuthenticated()) {
-    return res.redirect("/");
-  }
-  res.render("account/forgot", {
-    title: "Forgot Password"
-  });
-};
-
-/**
- * POST /forgot
- * Create a random token, then the send user an email with a reset link.
- */
-export let postForgot = (req: Request, res: Response, next: NextFunction) => {
-  req.assert("email", "Please enter a valid email address.").isEmail();
-  req.sanitize("email").normalizeEmail({ gmail_remove_dots: false });
-
-  const errors = req.validationErrors();
-
-  if (errors) {
-    req.flash("errors", errors);
-    return res.redirect("/forgot");
-  }
-
-  async.waterfall(
-    [
-      function createRandomToken(done: Function) {
-        crypto.randomBytes(16, (err, buf) => {
-          const token = buf.toString("hex");
-          done(err, token);
-        });
-      },
-      function setRandomToken(token: AuthToken, done: Function) {
-        UserMongo.findOne({ email: req.body.email }, (err, user: any) => {
-          if (err) {
-            return done(err);
-          }
-          if (!user) {
-            req.flash("errors", { msg: "Account with that email address does not exist." });
-            return res.redirect("/forgot");
-          }
-          user.passwordResetToken = token;
-          user.passwordResetExpires = Date.now() + 3600000; // 1 hour
-          user.save((err: WriteError) => {
-            done(err, token, user);
-          });
-        });
-      },
-      function sendForgotPasswordEmail(token: AuthToken, user: UserModel, done: Function) {
-        const transporter = nodemailer.createTransport({
-          service: "SendGrid",
-          auth: {
-            user: process.env.SENDGRID_USER,
-            pass: process.env.SENDGRID_PASSWORD
-          }
-        });
-        const mailOptions = {
-          to: user.email,
-          from: "hackathon@starter.com",
-          subject: "Reset your password on Hackathon Starter",
-          text: `You are receiving this email because you (or someone else) have requested the reset of the password for your account.\n\n
-          Please click on the following link, or paste this into your browser to complete the process:\n\n
-          http://${req.headers.host}/reset/${token}\n\n
-          If you did not request this, please ignore this email and your password will remain unchanged.\n`
-        };
-        transporter.sendMail(mailOptions, err => {
-          req.flash("info", { msg: `An e-mail has been sent to ${user.email} with further instructions.` });
-          done(err);
-        });
-      }
-    ],
-    err => {
-      if (err) {
-        return next(err);
-      }
-      res.redirect("/forgot");
+      res.redirect(`${CLIENT_BASE_URL}/`);
     }
   );
 };

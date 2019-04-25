@@ -24,7 +24,7 @@ export class User {
   passwordResetToken: string;
 
   @Column("datetime")
-  passwordResetExpires: Date;
+  passwordResetExpires: number;
 
   @Column()
   provider: string;
@@ -38,6 +38,7 @@ export class User {
   @OneToMany(type => Payment, payment => payment.user)
   payment: Payment[];
 
+  @BeforeUpdate()
   @BeforeInsert()
   updatePasswordHash() {
     if (this.provider === "local") {
@@ -55,3 +56,8 @@ export class User {
     // });
   }
 }
+
+export type AuthToken = {
+  accessToken: string;
+  kind?: string;
+};
