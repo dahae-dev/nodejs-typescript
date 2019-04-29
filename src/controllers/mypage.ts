@@ -42,6 +42,7 @@ export const getCourses = async (req: Request, res: Response) => {
 export const getMembers = async (req: Request, res: Response) => {
   try {
     const study_id = req.query.study_id;
+    console.log("*****study_id from query string: ", study_id);
 
     const token = req.headers["x-auth-token"] as string;
     const decoded = jwtDecode(token) as { id: number };
@@ -55,6 +56,7 @@ export const getMembers = async (req: Request, res: Response) => {
       .andWhere("payment.study_id = :study_id", { study_id })
       .andWhere("user.id != :id", { id })
       .getMany();
+    console.log("*****members: ", members);
 
     res.json({
       members
