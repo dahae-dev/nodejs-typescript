@@ -67,8 +67,13 @@ app.set("port", process.env.PORT || 5000);
 // app.set("view engine", "pug");
 // ------
 
+const corsOption = {
+  origin: "*",
+  methods: "GET, PUT, PATCH, POST, DELETE",
+  exposedHeaders: "*"
+};
 // For Social login
-app.use(cors());
+app.use(cors(corsOption));
 // app.use(function(req, res, next) {
 //   res.header("Access-Control-Allow-Credentials", "true");
 //   res.header("Access-Control-Allow-Origin", "*");
