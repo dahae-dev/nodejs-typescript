@@ -7,7 +7,6 @@
 | local       | http://localhost:5000                                            | http://localhost:3000                                    |              |
 | development | [http://api-dev.studystates.net](http://api-dev.studystates.net) | [http://dev.studystates.net](http://dev.studystates.net) |              |
 
-
 ## Status
 
 - dev branch : CircleCI [![CircleCI](https://circleci.com/gh/codestates/studystates-server/tree/dev.svg?style=svg&circle-token=e988f2482f1313e0473c65b8d610463eb55f5ea9)](https://circleci.com/gh/codestates/studystates-server/tree/dev)
@@ -29,27 +28,28 @@ https://github.com/codestates/studystates-server/wiki/%5BISSUE%5D-TypeScript-Nod
 npm install
 ```
 
-#### Launch Server 
+#### Launch Server
 
 ```bash
 yarn build
 yarn start   // yarn local과 동일
 ```
 
-#### 로컬에서 서버 개발 시 
+#### 로컬에서 서버 개발 시 watch mode
 
 ```bash
-yarn watch
+yarn watch-ts     // ts 컴파일
+yarn watch-node   // nodemon
 ```
 
-#### `dev:cd` 서버에서 서버 실행 시 
+#### `dev:cd` 서버에서 서버 실행 시
 
 ```bash
+yarn build
 yarn development
-//
+
 pm2 start npm --name "studystates-server" -- run development
 ```
-
 
 ## Code base
 
